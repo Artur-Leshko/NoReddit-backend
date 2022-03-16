@@ -84,7 +84,7 @@ WSGI_APPLICATION = 'antireddit.wsgi.application'
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql_psycopg2",
-        "NAME": "books",
+        "NAME": "noreddit",
         "USER": "postgres",
         "PASSWORD": "postgres",
         "HOST": "localhost",
