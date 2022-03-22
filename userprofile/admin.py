@@ -14,11 +14,24 @@ class CustomUserAdmin(BaseUserAdmin):
         Admin view of user
     '''
 
-    form = AdminCreationForm
-    add_form = AdminUpdateForm
+    form = AdminUpdateForm
+    add_form = AdminCreationForm
 
     list_display = ['username', 'email', 'is_staff', 'is_active']
-    list_filter = ['username', 'email', 'is_staff', 'is_active']
+    list_filter = ['is_staff', 'is_active']
+
+    fieldsets = (
+        (None, { 'fields': ('email', 'username', 'password') }),
+        ('Permissions', { 'fields': ('is_staff', 'is_admin', 'is_active') })
+    )
+
+    add_fieldsets = (
+        (None, {
+            'classes': ('wide',),
+            'fields': ('email', 'username', 'password', 'password_confirmation', 'is_staff', 'is_admin')
+        }),
+    )
+
     ordering = ['email']
     filter_horizontal = ()
 
