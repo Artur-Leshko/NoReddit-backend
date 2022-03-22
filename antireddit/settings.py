@@ -11,21 +11,23 @@ https://docs.djangoproject.com/en/4.0/ref/settings/
 """
 
 from pathlib import Path
+from dotenv import load_dotenv
 import os
 import datetime
 
+load_dotenv()
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-48ktl$jqt0%)f_&a1^goz48g2xybjiu9_+0in(g3-$8%sp2w8b'
+SECRET_KEY = os.environ.get('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DEBUG', default=True)
 
 ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
 
@@ -47,10 +49,10 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
 
     #interal apps
-    'api',
-    'categories',
-    'posts',
-    'userprofile'
+    'api.apps.ApiConfig',
+    'categories.apps.CategoriesConfig',
+    'posts.apps.PostsConfig',
+    'userprofile.apps.UserprofileConfig'
 ]
 
 REST_FRAMEWORK = {
@@ -118,11 +120,11 @@ WSGI_APPLICATION = 'antireddit.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'noreddit',
-        'USER': 'postgres',
-        'PASSWORD': 'postgres',
-        'HOST': 'localhost',
-        'PORT': '5432',
+        'NAME': os.environ.get('DB_NAME'),
+        'USER': os.environ.get('DB_USER'),
+        'PASSWORD': os.environ.get('DB_PASSWORD'),
+        'HOST': os.environ.get('DB_HOST'),
+        'PORT': os.environ.get('DB_PORT'),
     }
 }
 
@@ -178,5 +180,3 @@ STATIC_FINDERS = [
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-
