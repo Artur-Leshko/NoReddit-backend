@@ -1,4 +1,3 @@
-from curses.ascii import US
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from .models import User, UserProfile
@@ -11,4 +10,4 @@ def create_profile(sender, instance, created, **kwargs):
 
     if created:
         UserProfile.objects.create(user=instance, id=instance.id)
-        instance.profile.save()
+        instance.userprofile.save()
