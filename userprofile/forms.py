@@ -5,12 +5,18 @@ from django.contrib.auth.forms import ReadOnlyPasswordHashField
 User = get_user_model()
 
 class AdminCreationForm(forms.ModelForm):
+    '''
+        Form for admin to create User
+    '''
     password = forms.CharField(widget=forms.PasswordInput)
     password_confirmation = forms.CharField(label='Confirm Password', widget=forms.PasswordInput)
 
     class Meta:
+        '''
+            Meta class forAdminCreationForm
+        '''
         model = User
-        fields = ["username", "email", "firstname", "surname", "is_staff", "is_admin"]
+        fields = ["username", "email", "is_staff", "is_admin"]
 
     def clean(self):
         cleaned_data = super().clean()
@@ -33,12 +39,20 @@ class AdminCreationForm(forms.ModelForm):
         return user
 
 class AdminUpdateForm(forms.ModelForm):
+    '''
+        Form for admin to update User
+    '''
     password = ReadOnlyPasswordHashField()
 
     class Meta:
+        '''
+            Meta class for AdminUpdateForm
+        '''
         model = User
-        fields = ["username", "email", "firstname", "surname", "is_staff", "is_admin"]
+        fields = ["username", "email", "is_staff", "is_admin"]
 
     def clean_password(self):
+        '''
+            validating password
+        '''
         return self.initial("password")
-
