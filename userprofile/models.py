@@ -13,7 +13,15 @@ from django.contrib.auth.models import (BaseUserManager, AbstractBaseUser)
 
 
 class UserManager(BaseUserManager):
+    '''
+        Manager for custom User
+    '''
+
     def create_user(self, username, email, password, **extra_fields):
+        '''
+            function that handle user creating
+        '''
+
         if not email:
             raise ValueError("Email address is required field!")
         elif not username:
@@ -27,6 +35,10 @@ class UserManager(BaseUserManager):
         return user
 
     def create_superuser(self, username, email, password, **extra_fields):
+        '''
+            function that handle superuser creating
+        '''
+
         user = self.create_user(username, email, password, **extra_fields)
         user.is_staff = True
         user.is_admin = True
@@ -36,7 +48,9 @@ class UserManager(BaseUserManager):
 
 
 class User(AbstractBaseUser):
-    '''Model for User profile'''
+    '''
+        Model for User profile
+    '''
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     username = models.CharField(verbose_name="user name", max_length=200, unique=True)
@@ -56,8 +70,12 @@ class User(AbstractBaseUser):
     objects = UserManager()
 
     class Meta:
+        '''
+            Meta class for User
+        '''
+
         verbose_name = 'User'
         verbose_name_plural = 'Users'
 
     def __str__(self):
-        return self.username
+        return f'{self.username}'

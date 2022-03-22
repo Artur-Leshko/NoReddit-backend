@@ -1,4 +1,3 @@
-from pyexpat import model
 from django.contrib import admin
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
@@ -10,6 +9,10 @@ admin.site.unregister(Group)
 User = get_user_model()
 
 class CustomUserAdmin(BaseUserAdmin):
+    '''
+        Admin view of user
+    '''
+
     form = AdminCreationForm
     add_form = AdminUpdateForm
 
