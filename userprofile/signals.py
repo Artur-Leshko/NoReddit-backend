@@ -9,5 +9,5 @@ def create_profile(sender, instance, created, **kwargs):
     '''
 
     if created:
-        UserProfile.objects.create(user=instance, id=instance.id)
-        instance.userprofile.save()
+        new_userprofile = UserProfile.objects.create(user=instance, id=instance.id)
+        new_userprofile.save()
