@@ -75,7 +75,7 @@ class AdminCreateProfileForm(forms.ModelForm):
         cleaned_data = super().clean()
 
         user = cleaned_data.get("user")
-        if UserProfile.objects.get(user=user):
+        if UserProfile.objects.filter(user=user).exists():
             self.add_error('user', 'This user is already connected with some UserProfile')
 
         return cleaned_data
