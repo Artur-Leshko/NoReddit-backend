@@ -76,9 +76,15 @@ class User(AbstractBaseUser):
         ordering = ['username']
 
     def has_perm(self, perm, obj=None):
+        '''
+            function that define permission
+        '''
         return self.is_admin
 
     def has_module_perms(self, app_label):
+        '''
+            functuin that defin permission
+        '''
         return self.is_admin
 
     def __str__(self):
@@ -97,6 +103,8 @@ class UserProfile(models.Model):
     # avatar = models.ForeignKey(Picture, )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    USERNAME_FIELD = 'firstname'
 
     class Meta:
         '''

@@ -1,6 +1,7 @@
 from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import ReadOnlyPasswordHashField
+from .models import UserProfile
 
 User = get_user_model()
 
@@ -56,3 +57,39 @@ class AdminUpdateForm(forms.ModelForm):
             validating password
         '''
         return self.initial("password")
+
+
+class AdminCreateProfileForm(forms.ModelForm):
+    '''
+        Form for admin to create UserProfile
+    '''
+
+    class Meta:
+        '''
+            Meta class for AdminUpdateUserProfileForm
+        '''
+        model = UserProfile
+        fields = ['user', 'firstname', 'surname']
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        user = cleaned_data.get("user")
+        if UserProfile.objects.get(user=user):
+            self.add_error('user', 'This user is already connected with some UserProfile')
+
+        return cleaned_data
+
+
+class AdminUpdateUserProfileForm(forms.ModelForm):
+    '''
+        Form for admin to update UserProfile
+    '''
+    user = forms.CharField(label='Related User model', disabled=True)
+
+    class Meta:
+        '''
+            Meta class for AdminUpdateUserProfileForm
+        '''
+        model = UserProfile
+        fields = ['user', 'firstname', 'surname']
