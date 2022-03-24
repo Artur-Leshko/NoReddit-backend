@@ -45,7 +45,6 @@ INSTALLED_APPS = [
     #third party packages
     'corsheaders',
     'rest_framework',
-    'rest_framework.authtoken',
     'rest_framework_simplejwt',
 
     #interal apps
@@ -57,8 +56,6 @@ INSTALLED_APPS = [
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.SessionAuthentication',
-        'rest_framework.authentication.TokenAuthentication',
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
@@ -70,8 +67,10 @@ REST_FRAMEWORK = {
 
 SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ['Bearer'],
-    'ACCESS_TOKEN_LIFETIME': datetime.timedelta(seconds=30),
-    'REFRESH_TOKEN_LIFETIME': datetime.timedelta(minutes=1),
+    'ACCESS_TOKEN_LIFETIME': datetime.timedelta(minutes=5),
+    'REFRESH_TOKEN_LIFETIME': datetime.timedelta(minutes=10),
+
+    'ALGORITHM': 'HS256',
 }
 
 MIDDLEWARE = [
