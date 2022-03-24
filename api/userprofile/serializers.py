@@ -7,8 +7,6 @@ class UserSerializer(serializers.ModelSerializer):
         Serializer class  for User model
     '''
 
-    is_active = serializers.ReadOnlyField()
-    is_staff = serializers.ReadOnlyField()
     is_admin = serializers.ReadOnlyField()
 
     class Meta:
@@ -16,7 +14,7 @@ class UserSerializer(serializers.ModelSerializer):
             Meta class for User serializer
         '''
         model = User
-        fields = ['id', 'username', 'email', 'is_active', 'is_staff', 'is_admin']
+        fields = ['username', 'email', 'is_admin']
 
 class UserProfileSerializer(serializers.ModelSerializer):
     '''
@@ -24,8 +22,6 @@ class UserProfileSerializer(serializers.ModelSerializer):
     '''
 
     user = UserSerializer(many=False, read_only=True)
-    created_at = serializers.ReadOnlyField()
-    updated_at = serializers.ReadOnlyField()
 
     class Meta:
         '''
@@ -33,4 +29,4 @@ class UserProfileSerializer(serializers.ModelSerializer):
         '''
 
         model = UserProfile
-        fields = ['id', 'user', 'firstname', 'surname', 'created_at', 'updated_at']
+        fields = ['id', 'user', 'firstname', 'surname']
