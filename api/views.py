@@ -14,7 +14,8 @@ def signup(request):
     if request.method == 'POST':
         try:
             data = JSONParser().parse(request)
-            user = User.objects.create(email=data['email'], username=data['username'], password=data['password'])
+            user = User.objects.create(email=data['email'], username=data['username'])
+            user.set_password(data['password'])
             user.save()
             refreshToken = RefreshToken.for_user(user)
             return JsonResponse({ 'refresh': str(refreshToken), 'access': str(refreshToken.access_token), })
