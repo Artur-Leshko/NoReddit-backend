@@ -23,7 +23,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
         Serializer class for UserProfile model
     '''
 
-    user = UserSerializer(many=False, read_only=True)
+    user = UserSerializer(many=False)
 
     class Meta:
         '''
@@ -32,3 +32,20 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
         model = UserProfile
         fields = ['id', 'user', 'firstname', 'surname']
+
+    def update(self, instance, validated_data):
+        user_data = {}
+        if 'user' in validated_data:
+            user_data = validated_data.pop('user')
+        user = instance.user
+
+        instance.firstname = validated_data.get('firstname', instance.firstname)
+        instance.surname = validated_data.get('surname', instance.surname)
+        instance.save()
+
+        user.email = user_data.get('email', user.email)
+        user.username = user_data.get('username', user.username)
+        user.save()
+
+        return instance
+

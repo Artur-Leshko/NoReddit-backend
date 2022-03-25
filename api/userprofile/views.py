@@ -1,9 +1,12 @@
 from django.http import Http404
+from django.contrib.auth import get_user_model
 from rest_framework import permissions, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from api.userprofile.serializers import UserProfileSerializer
+from api.userprofile.serializers import UserProfileSerializer, UserSerializer
 from userprofile.models import UserProfile
+
+User = get_user_model()
 
 class UserProfileView(APIView):
     '''
@@ -37,7 +40,12 @@ class UserProfileView(APIView):
             Updates data for loggen in user
         '''
         userprofile = self.get_object(request.user)
-        # implenet put method
+        serializer = UserProfileSerializer(userprofile, data=request.data, partial=True)
+
+        if serializer.is_valid(raise_exception=True):
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
+        return Response({'error': 'Bad data!'}, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request):
         '''
