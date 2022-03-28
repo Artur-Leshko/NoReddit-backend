@@ -1,10 +1,10 @@
-from django.http import Http404
 from django.contrib.auth import get_user_model
 from rest_framework import permissions, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from api.userprofile.serializers import UserProfileSerializer, UserSerializer
+from api.userprofile.serializers import UserProfileSerializer
 from userprofile.models import UserProfile
+from api.exeptions import CustomApiException
 
 User = get_user_model()
 
@@ -22,7 +22,7 @@ class UserProfileView(APIView):
         try:
             userprofile = UserProfile.objects.get(user=user)
         except UserProfile.DoesNotExist:
-            raise Http404
+            raise CustomApiException(404, "User profile does not exist")
 
         return userprofile
 
@@ -51,8 +51,8 @@ class UserProfileView(APIView):
         '''
             Deletes UserProfile for logged in user
         '''
-        user_to_delete = User.objects.get(id=request.user.id)
-        user_to_delete.delete()
+        user = User.objects.get(id=request.user.id)
+        user.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -72,7 +72,7 @@ class UserProfilePublicView(APIView):
         try:
             userprofile = UserProfile.objects.get(pk=pk)
         except UserProfile.DoesNotExist:
-            raise Http404
+            raise CustomApiException(404, "User profile does not exist")
 
         return userprofile
 
