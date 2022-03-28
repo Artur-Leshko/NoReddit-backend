@@ -16,7 +16,7 @@ class UserSerializer(serializers.ModelSerializer):
             Meta class for User serializer
         '''
         model = User
-        fields = ['username', 'email', 'is_admin']
+        fields = ['username', 'is_admin']
 
 class UserProfileSerializer(serializers.ModelSerializer):
     '''
@@ -48,4 +48,3 @@ class UserProfileSerializer(serializers.ModelSerializer):
         user.save()
 
         return instance
-
