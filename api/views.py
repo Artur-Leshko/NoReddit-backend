@@ -1,6 +1,5 @@
 from rest_framework import status
 from rest_framework.parsers import JSONParser
-from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.views.decorators.csrf import csrf_exempt
 from django.db import IntegrityError, transaction
@@ -13,6 +12,9 @@ User = get_user_model()
 @csrf_exempt
 @transaction.atomic
 def signup(request):
+    '''
+        view for registration
+    '''
     if request.method == 'POST':
         try:
             data = JSONParser().parse(request)
@@ -25,8 +27,12 @@ def signup(request):
                 userprofile = UserProfile.objects.create(user=user, id=user.id)
                 userprofile.save()
 
-                refreshToken = RefreshToken.for_user(user)
-
-            return JsonResponse({ 'refresh': str(refreshToken), 'access': str(refreshToken.access_token), })
+                refresh_token = RefreshToken.for_user(user)
+            return JsonResponse({ 'refresh': str(refresh_token),
+                'access': str(refresh_token.access_token), })
         except IntegrityError:
-            return JsonResponse({ 'error': 'That username or email has already been taken! Please choose another one.' }, status=status.HTTP_400_BAD_REQUEST)
+            return JsonResponse({ 'error': 'That username or email has already been taken!\
+                Please choose another one.' }, status=status.HTTP_400_BAD_REQUEST)
+        except Exception:
+            return JsonResponse({ 'error': 'Some of the data is missing: username, password or email' },
+                status=status.HTTP_400_BAD_REQUEST)

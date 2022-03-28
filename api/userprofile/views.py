@@ -51,8 +51,8 @@ class UserProfileView(APIView):
         '''
             Deletes UserProfile for logged in user
         '''
-        userprofile = self.get_object(request.user)
-        userprofile.delete()
+        user_to_delete = User.objects.get(id=request.user.id)
+        user_to_delete.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -76,7 +76,7 @@ class UserProfilePublicView(APIView):
 
         return userprofile
 
-    def get(self, request, pk, format=None):
+    def get(self, request, pk):
         '''
             Return public userprofile of any user
         '''
