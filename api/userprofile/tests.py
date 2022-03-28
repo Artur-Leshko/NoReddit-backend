@@ -83,10 +83,26 @@ class UserProfileTests(APITestCase):
         response = self.client.delete(reverse('userprofile'))
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
-    # def test_authorized_update_profile(self):
-    #     '''
-    #         tests that authorized user can update his profile
-    #     '''
+    def test_authorized_valid_update_profile(self):
+        '''
+            tests that authorized user can update his profile with valid data
+        '''
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + str(self.first_user_token))
+        response = self.client.put(reverse('userprofile'), { 'firstname': 'my name',
+            'surname': 'lalala' })
+        self.first_userprofile.refresh_from_db()
+        serializer = UserProfileSerializer(self.first_userprofile)
+        self.assertEqual(response.status_code, status.HTTP_202_ACCEPTED)
+        self.assertEqual(response.json(), serializer.data)
+
+    def test_authorized_invalid_update_profile(self):
+        '''
+            tests that authorized user can not update his profile with invalid data
+        '''
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + str(self.first_user_token))
+        response = self.client.put(reverse('userprofile'), { 'firstname': 'my name',
+            'user': { 'email': '' } })
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_unauthorized_update_profile(self):
         '''
