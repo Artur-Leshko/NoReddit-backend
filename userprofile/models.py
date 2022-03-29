@@ -15,7 +15,7 @@ class Picture(models.Model):
         model for storing UserProfile Avatar
     '''
     local_url = models.ImageField(upload_to=user_path)  # local url to the file
-    url_to_upload = models.Charfield(max_length=200, default='')  # url for front
+    url_to_upload = models.CharField(max_length=200, default='')  # url for front
 
     @staticmethod
     def upload_image(image):
@@ -29,7 +29,7 @@ class Picture(models.Model):
         return picture
 
     def delete(self, using=None, keep_parents=False):
-        os.remove(self.url_to_upload)
+        os.remove(self.local_url)
         super().delete(using=using, keep_parents=keep_parents)
 
 
@@ -119,7 +119,7 @@ class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     firstname = models.CharField(verbose_name="user firstname", max_length=200, blank=True)
     surname = models.CharField(verbose_name="user surname", max_length=200, blank=True)
-    avatar = models.ForeignKey(Picture, on_delete=models.SET_NULL, null=True)
+    avatar = models.ForeignKey(Picture, on_delete=models.CASCADE, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
