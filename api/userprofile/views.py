@@ -33,7 +33,7 @@ class UserProfileView(APIView):
 
         userprofile = self.get_object(request.user)
         data = UserProfileSerializer(userprofile).data
-        return Response(data, status=200)
+        return Response(data, status=status.HTTP_200_OK)
 
     def put(self, request):
         '''
@@ -42,10 +42,10 @@ class UserProfileView(APIView):
         userprofile = self.get_object(request.user)
         serializer = UserProfileSerializer(userprofile, data=request.data, partial=True)
 
-        if serializer.is_valid(raise_exception=True):
+        if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
-        return Response({'error': 'Bad data!'}, status=status.HTTP_400_BAD_REQUEST)
+        raise CustomApiException(400, 'Bad data!')
 
     def delete(self, request):
         '''
@@ -83,4 +83,4 @@ class UserProfilePublicView(APIView):
 
         userprofile = self.get_object(pk)
         data = UserProfileSerializer(userprofile).data
-        return Response(data, status=200)
+        return Response(data, status=status.HTTP_200_OK)

@@ -6,6 +6,7 @@ from rest_framework_simplejwt.tokens import AccessToken
 
 from userprofile.models import UserProfile
 from .serializers import UserProfileSerializer
+from api.exeptions import CustomApiException
 
 User = get_user_model()
 
@@ -58,7 +59,7 @@ class UserProfileTests(APITestCase):
 
     def test_invalid_profile(self):
         '''
-            tests that unlogged-in user can not access the userprofile data
+            tests that unauthorized user can not access the userprofile data
         '''
         response = self.client.get(reverse('userprofile'))
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
@@ -101,8 +102,9 @@ class UserProfileTests(APITestCase):
         '''
         self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + str(self.first_user_token))
         response = self.client.put(reverse('userprofile'), { 'firstname': 'my name',
-            'user': { 'email': '' } })
+            'user': { 'username': '' } })
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
 
     def test_unauthorized_update_profile(self):
         '''
@@ -127,7 +129,7 @@ class UserProfileTests(APITestCase):
 
     def test_invalid_public_profile(self):
         '''
-            test that unlogged-in user can not access userprofile info of different users
+            test that unauthorized user can not access userprofile info of different users
         '''
         response = self.client.get(reverse('userprofile_public',
             kwargs={"pk": self.second_user.id}))
@@ -139,24 +141,20 @@ class UserProfileTests(APITestCase):
         '''
         response = self.client.post(reverse('user_registration'), {'username': 'clear',
             'email': 'gfdh@mail.ru', 'password': 'asdfgh'})
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
     def test_invalid_registration(self):
         '''
             tests registration with invalid data
         '''
-        response = self.client.post(reverse('user_registration'), {'username': 'clear',
-            'password': 'asdfg'})
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual({ 'error': 'Some of the data is missing: username, password or email' },
-            response.json())
+        with self.assertRaises(CustomApiException):
+            self.client.post(reverse('user_registration'), {'username': 'clear',
+                'password': 'asdfg'})
 
     def test_exist_user_registration(self):
         '''
             tests registration of user with already existing data
         '''
-        response = self.client.post(reverse('user_registration'), {'username': 'my user',
-            'email': 'abcdf@mail.ru', 'password': 'qwe123'})
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual({ 'error': 'That username or email has already been taken!\
-                Please choose another one.' }, response.json())
+        with self.assertRaises(CustomApiException):
+            self.client.post(reverse('user_registration'), {'username': 'my user',
+                'email': 'abcdf@mail.ru', 'password': 'qwe123'})
