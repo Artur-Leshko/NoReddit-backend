@@ -7,30 +7,10 @@ def user_path(instance, filename):
     '''
         makes path  of the file using user id
     '''
-    return 'userprofile/user_{0}/{1}'.format(instance.user.id, filename)
-
-# Model for User avatar
-class Picture(models.Model):
-    '''
-        model for storing UserProfile Avatar
-    '''
-    local_url = models.ImageField(upload_to=user_path)  # local url to the file
-    url_to_upload = models.CharField(max_length=200, default='')  # url for front
-
-    @staticmethod
-    def upload_image(image):
-        '''
-            creates picture object
-        '''
-        picture = Picture.objects.create(
-            local_url=image,
-            url_to_upload=uuid.uuid4
-        )
-        return picture
-
-    def delete(self, using=None, keep_parents=False):
-        os.remove(self.local_url)
-        super().delete(using=using, keep_parents=keep_parents)
+    splited_filename = str(filename).split('.')
+    image_name = str(uuid.uuid4()) + '.' + splited_filename[-1]
+    print('user_path: ', image_name)
+    return 'userprofile/user_{0}/{1}'.format(instance.user.id, image_name)
 
 
 class UserManager(BaseUserManager):
@@ -119,7 +99,7 @@ class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     firstname = models.CharField(verbose_name="user firstname", max_length=200, blank=True)
     surname = models.CharField(verbose_name="user surname", max_length=200, blank=True)
-    avatar = models.ForeignKey(Picture, on_delete=models.CASCADE, blank=True, null=True)
+    avatar = models.ImageField(upload_to=user_path, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -134,14 +114,9 @@ class UserProfile(models.Model):
         verbose_name_plural = 'UserProfiles'
         ordering = ['-created_at']
 
-    def set_avatar(self, avatar):
-        '''
-            sets userprofile avatar
-        '''
-        if self.avatar is not None:
-            self.avatar.delete()
-        self.avatar = Picture.upload_image(image=avatar)
-        self.save()
+    def delete_avatar(self, using=None, keep_parents=False):
+        os.remove(os.getcwd() + str(self.avatar))
+        super().delete(using=using, keep_parents=keep_parents)
 
     def __str__(self):
         if not self.firstname or not self.surname:

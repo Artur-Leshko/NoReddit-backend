@@ -69,7 +69,7 @@ class AdminCreateProfileForm(forms.ModelForm):
             Meta class for AdminUpdateUserProfileForm
         '''
         model = UserProfile
-        fields = ['user', 'firstname', 'surname']
+        fields = ['user', 'firstname', 'avatar', 'surname']
 
     def clean(self):
         cleaned_data = super().clean()
@@ -92,4 +92,4 @@ class AdminUpdateUserProfileForm(forms.ModelForm):
             Meta class for AdminUpdateUserProfileForm
         '''
         model = UserProfile
-        fields = ['user', 'firstname', 'surname']
+        fields = ['user', 'firstname', 'avatar', 'surname']

@@ -26,14 +26,6 @@ class UserProfileView(APIView):
 
         return userprofile
 
-    def set_avatar_from_request(self, userprofile):
-        '''
-            sets avatar for userprofile
-        '''
-        avatar = self.request.data.get('avatar')
-        if avatar is not None:
-            userprofile.set_avatar(avatar)
-
     def get(self, request):
         '''
             Return userprofile of logged in user
@@ -51,7 +43,7 @@ class UserProfileView(APIView):
         serializer = UserProfileSerializer(userprofile, data=request.data, partial=True)
 
         if serializer.is_valid(raise_exception=True):
-            self.set_avatar_from_request(serializer.save())
+            serializer.save()
             return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
         return Response({'error': 'Bad data!'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -62,7 +54,6 @@ class UserProfileView(APIView):
         user = User.objects.get(id=request.user.id)
         user.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
-
 
 
 class UserProfilePublicView(APIView):
