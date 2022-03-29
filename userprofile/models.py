@@ -124,6 +124,15 @@ class UserProfile(models.Model):
         verbose_name_plural = 'UserProfiles'
         ordering = ['-created_at']
 
+    def set_avatar(self, avatar):
+        '''
+            sets userprofile avatar
+        '''
+        if self.avatar is not None:
+            self.avatar.delete()
+        self.avatar = Picture.upload_image(image=avatar)
+        self.save()
+
     def __str__(self):
         if not self.firstname or not self.surname:
             return f'{self.user.username}'
