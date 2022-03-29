@@ -1,6 +1,7 @@
 import uuid
 import os
 from django.db import models
+from django.conf import settings
 from django.contrib.auth.models import (BaseUserManager, AbstractBaseUser)
 
 def user_path(instance, filename):
@@ -114,9 +115,8 @@ class UserProfile(models.Model):
         verbose_name_plural = 'UserProfiles'
         ordering = ['-created_at']
 
-    def delete_avatar(self, using=None, keep_parents=False):
-        os.remove(os.getcwd() + str(self.avatar))
-        super().delete(using=using, keep_parents=keep_parents)
+    # def delete_avatar(self):
+    #     os.remove(str(settings.BASE_DIR) + '\\'.join(str(self.avatar).split('/')))
 
     def __str__(self):
         if not self.firstname or not self.surname:

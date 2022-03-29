@@ -41,6 +41,9 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
         instance.firstname = validated_data.get('firstname', instance.firstname)
         instance.surname = validated_data.get('surname', instance.surname)
+
+        # if 'avatar' in validated_data and instance.avatar != None:
+        #     instance.delete_avatar()
         instance.avatar = validated_data.get('avatar', instance.avatar)
         instance.save()
 
