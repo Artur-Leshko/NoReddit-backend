@@ -1,4 +1,5 @@
 import uuid
+import os
 from django.db import models
 from django.contrib.auth.models import (BaseUserManager, AbstractBaseUser)
 
@@ -7,6 +8,20 @@ class Picture(models.Model):
     local_url = models.ImageField(upload_to='userprofile/')  # local url to the file
     url_to_upload = models.Charfield(max_length=200, default='')  # url for front
 
+    @staticmethod
+    def upload_image(image):
+        '''
+            creates picture object
+        '''
+        picture = Picture.objects.create(
+            local_url=image,
+            url_to_upload=uuid.uuid4
+        )
+        return picture
+
+    def delete(self, using=None, keep_parents=False):
+        os.remove(self.url_to_upload)
+        super().delete(using=using, keep_parents=keep_parents)
 
 class UserManager(BaseUserManager):
     '''
