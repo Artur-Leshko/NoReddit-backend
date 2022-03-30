@@ -115,9 +115,6 @@ class UserProfile(models.Model):
         verbose_name_plural = 'UserProfiles'
         ordering = ['-created_at']
 
-    # def delete_avatar(self):
-    #     os.remove(str(settings.BASE_DIR) + '\\'.join(str(self.avatar).split('/')))
-
     def __str__(self):
         if not self.firstname or not self.surname:
             return f'{self.user.username}'
