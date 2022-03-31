@@ -11,6 +11,7 @@ class Post(models.Model):
     owner = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
     title = models.CharField(max_length=255, blank=False)
     main_text = models.TextField(blank=False)
+    votes = models.IntegerField(default=0, null=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

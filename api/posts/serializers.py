@@ -15,5 +15,5 @@ class PostSerializer(serializers.ModelSerializer):
             Meta class for PostSerializer
         '''
         model = Post
-        fields = ['owner', 'title', 'main_text']
+        fields = ['owner', 'title', 'main_text', 'votes']
 
