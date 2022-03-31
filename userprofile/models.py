@@ -1,18 +1,6 @@
 import uuid
 from django.db import models
 from django.contrib.auth.models import (BaseUserManager, AbstractBaseUser)
-# from django.dispatch import receiver
-# from django.db.models.signals import post_save
-
-# def upload_to(instance, filename):
-#     relative_path = instance.url_to_upload.rfind('images/') + len('images/')
-#     return instance.url_to_upload[relative_path]
-
-# Model for User avatar
-# class Picture(models.Model):
-    # local_url = models.ImageField(upload_to=upload_to)  # local url to the file
-    # url_to_upload = models.Charfield(max_length=200, default='')  # url for front
-
 
 class UserManager(BaseUserManager):
     '''
