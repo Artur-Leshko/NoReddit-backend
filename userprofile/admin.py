@@ -49,13 +49,13 @@ class CustomUserProfileAdmin(BaseUserAdmin):
 
     fieldsets = (
         ('Connected User', { 'fields': ('user',) }),
-        ('Data fields', { 'fields': ('firstname', 'surname') })
+        ('Data fields', { 'fields': ('firstname', 'avatar', 'surname') })
     )
 
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
-            'fields': ('user', 'firstname', 'surname')
+            'fields': ('user', 'firstname', 'avatar', 'surname')
         }),
     )
 

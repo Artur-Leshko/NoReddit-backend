@@ -56,7 +56,6 @@ class UserProfileView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-
 class UserProfilePublicView(APIView):
     '''
         Output for the public UserProfile
