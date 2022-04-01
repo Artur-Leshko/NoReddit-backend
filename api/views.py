@@ -26,10 +26,10 @@ def signup(request):
 
                 userprofile = UserProfile.objects.create(user=user, id=user.id)
                 userprofile.save()
-
         except IntegrityError:
-            raise CustomApiException(status.HTTP_400_BAD_REQUEST, 'That username or email has already\
-                been taken! Please choose another one.')
+            raise CustomApiException(400, 'That username or email has already been taken! Please choose another one.')
+        except:
+            raise CustomApiException(400, 'Some of the data is missing: username, password or email')
         return JsonResponse({'message': 'You have successfully registered! Now sign-in!'},
                 status=status.HTTP_201_CREATED)
 
