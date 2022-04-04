@@ -42,7 +42,7 @@ class CreatePost(generics.CreateAPIView):
 
 class UpvotePostDetail(APIView):
     '''
-        Upvotes and return renew Post
+        Upvotes and returns renewed Post
     '''
     permisson_classes = [permissions.IsAuthenticated]
 
@@ -53,7 +53,7 @@ class UpvotePostDetail(APIView):
         try:
             post = Post.objects.get(pk=pk)
         except Post.DoesNotExist:
-            raise CustomApiException(404, "This post does not exist!")
+            raise CustomApiException(404, 'This post does not exist!')
 
         return post
 
@@ -85,4 +85,53 @@ class UpvotePostDetail(APIView):
 
             serializer = PostSerializer(self.get_object(pk))
 
-            return Response(serializer.data, status=status.HTTP_204_NO_CONTENT)
+            return Response(serializer.data, status=status.HTTP_205_RESET_CONTENT)
+
+
+class DownvotePostDetail(APIView):
+    '''
+        Downvotes and returns renewed post
+    '''
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self, pk):
+        '''
+            returns Post object
+        '''
+
+        try:
+            post = Post.objects.get(pk=pk)
+        except Post.DoesNotExist:
+            raise CustomApiException(404, 'This post does not exist!')
+        return post
+
+    def put(self, request, pk):
+        '''
+            Add or delete downote for post
+        '''
+
+        current_vote = Vote.objects.filter(owner=request.user.id, post=pk)
+        current_vote_values = current_vote.values()
+
+        if not current_vote:
+            new_vote = Vote.objects.create(owner=UserProfile.objects.get(pk=request.user.id),
+                post=Post.objects.get(pk=pk), vote_type='down')
+            new_vote.save()
+
+            serializer = PostSerializer(self.get_object(pk))
+
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        elif current_vote_values[0]['vote_type'] == 'up':
+            current_vote_values[0]['vote_type'] = 'down'
+            current_vote.save()
+
+            serializer = PostSerializer(self.get_object(pk))
+
+            return Response(serializer.data, status=status.HTTP_205_RESET_CONTENT)
+        else:
+            current_vote.delete()
+
+            serializer = PostSerializer(self.get_object(pk))
+
+            return Response(serializer.data, status=status.HTTP_205_RESET_CONTENT)
