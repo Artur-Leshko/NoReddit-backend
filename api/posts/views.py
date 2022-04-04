@@ -7,6 +7,7 @@ from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
 
 from api.exeptions import CustomApiException
+from api.permissions import IsPostOwner
 from userprofile.models import UserProfile
 from posts.models import Post, Vote
 from .serializers import PostSerializer, CreatePostSerializer
@@ -144,4 +145,11 @@ class RetrievePostView(generics.RetrieveAPIView):
 
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = PostSerializer
+    queryset = Post.objects.all()
+
+class DestroyPostView(generics.DestroyAPIView):
+    '''
+        View for deleting post
+    '''
+    permission_classes = [IsPostOwner]
     queryset = Post.objects.all()
