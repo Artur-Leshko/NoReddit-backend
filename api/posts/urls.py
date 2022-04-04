@@ -8,4 +8,5 @@ urlpatterns = [
     path('<str:pk>/downvote/', views.DownvotePostDetail.as_view(), name='post_downvote'),
     path('<str:pk>/', views.RetrievePostView.as_view(), name='post_show'),
     path('<str:pk>/delete/', views.DestroyPostView.as_view(), name='post_delete'),
+    path('<str:pk>/edit/', views.UpdatePostView.as_view(), name='post_edit'),
 ]

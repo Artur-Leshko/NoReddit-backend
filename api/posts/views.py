@@ -153,3 +153,14 @@ class DestroyPostView(generics.DestroyAPIView):
     '''
     permission_classes = [IsPostOwner]
     queryset = Post.objects.all()
+
+class UpdatePostView(generics.UpdateAPIView):
+    '''
+        View for updating post
+    '''
+    permission_classes = [IsPostOwner]
+    queryset = Post.objects.all()
+    serializer_class = PostSerializer
+
+    def put(self, request, *args, **kwargs):
+        return self.partial_update(request, *args, **kwargs)

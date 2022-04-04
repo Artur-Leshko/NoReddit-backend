@@ -19,6 +19,7 @@ class PostSerializer(serializers.ModelSerializer):
         '''
         model = Post
         fields = ['owner', 'title', 'main_text', 'upvotes', 'downvotes']
+        read_only_fields = ['owner', 'upvotes', 'downvotes']
 
     def get_upvotes(self, obj):
         '''
