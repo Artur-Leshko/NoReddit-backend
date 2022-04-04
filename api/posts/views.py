@@ -135,3 +135,13 @@ class DownvotePostDetail(APIView):
             serializer = PostSerializer(self.get_object(pk))
 
             return Response(serializer.data, status=status.HTTP_205_RESET_CONTENT)
+
+
+class RetrievePostView(generics.RetrieveAPIView):
+    '''
+        View for showing post
+    '''
+
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = PostSerializer
+    queryset = Post.objects.all()
