@@ -1,11 +1,15 @@
-from  datetime import timedelta
+from datetime import timedelta
 from django.db.models import Q
-from rest_framework import permissions
+from rest_framework import permissions, status
 from rest_framework import generics
+from rest_framework.views import APIView
+from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
 
-from posts.models import Post
-from .serializers import PostSerializer
+from api.exeptions import CustomApiException
+from userprofile.models import UserProfile
+from posts.models import Post, Vote
+from .serializers import PostSerializer, CreatePostSerializer
 
 class PostPagination(PageNumberPagination):
     '''
@@ -22,4 +26,63 @@ class PopularPostsList(generics.ListAPIView):
     serializer_class = PostSerializer
     permission_classes = [permissions.IsAuthenticated]
     pagination_class = PostPagination
-    queryset = Post.objects.filter(Q(created_at=timedelta(days=3) & Q(votes__gte=50) | Q(created_at=timedelta(days=1))))
+    queryset = Post.objects.all()
+    # Q(created_at=timedelta(days=3) & Q(votes__gte=50) | Q(created_at=timedelta(days=1)))
+
+class CreatePost(generics.CreateAPIView):
+    '''
+        Creating post
+    '''
+    serializer_class = CreatePostSerializer
+    queryset = Post.objects.all()
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        serializer.save(owner=UserProfile.objects.get(pk=self.request.user.id))
+
+class UpvotePostDetail(APIView):
+    '''
+        Upvotes and return renew Post
+    '''
+    permisson_classes = [permissions.IsAuthenticated]
+
+    def get_object(self, pk):
+        '''
+            returns Post object
+        '''
+        try:
+            post = Post.objects.get(pk=pk)
+        except Post.DoesNotExist:
+            raise CustomApiException(404, "This post does not exist!")
+
+        return post
+
+    def put(self, request, pk):
+        '''
+            Add or delete upvote from post
+        '''
+
+        current_vote = Vote.objects.filter(owner=request.user.id, post=pk)
+        current_vote_values = current_vote.values()
+
+        if not current_vote:
+            new_vote = Vote.objects.create(owner=UserProfile.objects.get(pk=request.user.id),
+                post=Post.objects.get(pk=pk), vote_type='up')
+            new_vote.save()
+
+            serializer = PostSerializer(self.get_object(pk))
+
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        elif current_vote_values[0]['vote_type'] == 'down':
+            current_vote_values[0]['vote_type'] = 'up'
+            current_vote.save()
+
+            serializer = PostSerializer(self.get_object(pk))
+
+            return Response(serializer.data, status=status.HTTP_205_RESET_CONTENT)
+        else:
+            current_vote.delete()
+
+            serializer = PostSerializer(self.get_object(pk))
+
+            return Response(serializer.data, status=status.HTTP_204_NO_CONTENT)
