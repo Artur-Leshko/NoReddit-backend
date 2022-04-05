@@ -16,7 +16,6 @@ User = get_user_model()
 # path('<str:pk>/upvote/', views.UpvotePostDetail.as_view(), name='post_upvote'),
 # path('<str:pk>/downvote/', views.DownvotePostDetail.as_view(), name='post_downvote'),
 
-# path('<str:pk>/delete/', views.DestroyPostView.as_view(), name='post_delete'),
 # path('<str:pk>/edit/', views.UpdatePostView.as_view(), name='post_edit'),
 
 class PostsAndVotesTests(APITestCase):
@@ -168,3 +167,66 @@ class PostsAndVotesTests(APITestCase):
             kwargs={"pk": self.first_user_post.id}))
 
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_authorized_post_owner_valid_update(self):
+        '''
+            authorized post owner can update the post with valid data
+        '''
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + str(self.first_user_token))
+        response = self.client.put(reverse('post_edit',
+            kwargs={"pk": self.first_user_post.id}), {'title': 'hello'})
+
+        self.first_user_post.refresh_from_db()
+        serializer = PostSerializer(self.first_user_post)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.json(), serializer.data)
+
+    def test_authorized_post_owner_invalid_update(self):
+        '''
+            authorized post owner can't update the post with invalid data
+        '''
+        old_first_user_post = self.first_user_post
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + str(self.first_user_token))
+
+        blank_title_response = self.client.put(reverse('post_edit',
+            kwargs={"pk": self.first_user_post.id}), {'title': ''})
+        blank_text_response = self.client.put(reverse('post_edit',
+            kwargs={"pk": self.first_user_post.id}), {'main_text': ''})
+        empty_response = self.client.put(reverse('post_edit',
+            kwargs={"pk": self.first_user_post.id}), {})
+
+        self.first_user_post.refresh_from_db()
+
+        self.assertEqual(blank_text_response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(blank_title_response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(empty_response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(old_first_user_post, self.first_user_post)
+
+    def test_authorized_post_update(self):
+        '''
+            authorized user can't update the post of another user
+        '''
+        old_first_user_post = self.first_user_post
+
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + str(self.second_user_token))
+        response = self.client.put(reverse('post_edit',
+            kwargs={"pk": self.first_user_post.id}), {'title': 'hello'})
+
+        self.first_user_post.refresh_from_db()
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(old_first_user_post, self.first_user_post)
+
+    def test_unauthorized_post_update(self):
+        '''
+            unauthorized user can't update the post
+        '''
+        old_first_user_post = self.first_user_post
+        response = self.client.put(reverse('post_edit',
+            kwargs={"pk": self.first_user_post.id}), {'title': 'hello'})
+        self.first_user_post.refresh_from_db()
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(old_first_user_post, self.first_user_post)
+
