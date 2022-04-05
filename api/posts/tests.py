@@ -11,10 +11,11 @@ from api.exeptions import CustomApiException
 
 User = get_user_model()
 
-# path('', views.CreatePost.as_view() , name='posts_create'),
 # path('popular/', views.PopularPostsList.as_view(), name='posts_popular'),
+
 # path('<str:pk>/upvote/', views.UpvotePostDetail.as_view(), name='post_upvote'),
 # path('<str:pk>/downvote/', views.DownvotePostDetail.as_view(), name='post_downvote'),
+
 # path('<str:pk>/', views.RetrievePostView.as_view(), name='post_show'),
 # path('<str:pk>/delete/', views.DestroyPostView.as_view(), name='post_delete'),
 # path('<str:pk>/edit/', views.UpdatePostView.as_view(), name='post_edit'),
@@ -65,9 +66,11 @@ class PostsAndVotesTests(APITestCase):
         self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + str(self.second_user_token))
         response = self.client.post(reverse('posts_create'), {'title': 'Second user post',
             'main_text': 'asdasdasd'})
+
+        serializer = CreatePostSerializer(Post.objects.get(title='Second user post'))
+
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(response.json(), {'title': 'Second user post',
-            'main_text': 'asdasdasd'})
+        self.assertEqual(response.json(), serializer.data)
 
     def test_authorized_invalid_post_creation(self):
         '''
@@ -98,4 +101,31 @@ class PostsAndVotesTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
 
+    def test_authorized_post_details(self):
+        '''
+            authorized user can watch the post
+        '''
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + str(self.first_user_token))
+        first_response = self.client.get(reverse('post_show',
+            kwargs={"pk": self.first_user_post.id}))
 
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + str(self.second_user_token))
+        second_response = self.client.get(reverse('post_show',
+            kwargs={"pk": self.first_user_post.id}))
+
+        serializer = PostSerializer(self.first_user_post)
+
+        self.assertEqual(first_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(first_response.json(), serializer.data)
+
+        self.assertEqual(second_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(second_response.json(), serializer.data)
+
+    def test_unauthorized_post_details(self):
+        '''
+            unauthorized user can't watch the post
+        '''
+        response = self.client.get(reverse('post_show',
+            kwargs={"pk": self.first_user_post.id}))
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
