@@ -75,8 +75,8 @@ class UpvotePostDetail(APIView):
 
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         elif current_vote_values[0]['vote_type'] == 'down':
-            current_vote_values[0]['vote_type'] = 'up'
-            current_vote.save()
+            current_vote[0].vote_type = 'up'
+            current_vote[0].save()
 
             serializer = PostSerializer(self.get_object(pk))
 
@@ -124,8 +124,8 @@ class DownvotePostDetail(APIView):
 
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         elif current_vote_values[0]['vote_type'] == 'up':
-            current_vote_values[0]['vote_type'] = 'down'
-            current_vote.save()
+            current_vote[0].vote_type = 'down'
+            current_vote[0].save()
 
             serializer = PostSerializer(self.get_object(pk))
 

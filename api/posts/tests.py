@@ -13,11 +13,6 @@ User = get_user_model()
 
 # path('popular/', views.PopularPostsList.as_view(), name='posts_popular'),
 
-# path('<str:pk>/upvote/', views.UpvotePostDetail.as_view(), name='post_upvote'),
-# path('<str:pk>/downvote/', views.DownvotePostDetail.as_view(), name='post_downvote'),
-
-# path('<str:pk>/edit/', views.UpdatePostView.as_view(), name='post_edit'),
-
 class PostsAndVotesTests(APITestCase):
     '''
         Tests for Posts and Votes
@@ -230,3 +225,76 @@ class PostsAndVotesTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertEqual(old_first_user_post, self.first_user_post)
 
+    def test_authorized_upvote_post(self):
+        '''
+            authorized user can upvote any post
+        '''
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + str(self.second_user_token))
+        first_upvote_response = self.client.put(reverse('post_upvote',
+            kwargs={"pk": self.first_user_post.id}))
+
+        self.first_user_post.refresh_from_db()
+        serializer = PostSerializer(self.first_user_post)
+        self.assertEqual(first_upvote_response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(first_upvote_response.json(), serializer.data)
+
+        second_upvote_response = self.client.put(reverse('post_upvote',
+            kwargs={"pk": self.first_user_post.id}))
+
+        self.first_user_post.refresh_from_db()
+        serializer = PostSerializer(self.first_user_post)
+        self.assertEqual(second_upvote_response.status_code, status.HTTP_205_RESET_CONTENT)
+        self.assertEqual(second_upvote_response.json(), serializer.data)
+
+        self.client.put(reverse('post_downvote',
+            kwargs={"pk": self.first_user_post.id}))
+        third_upvote_response = self.client.put(reverse('post_upvote',
+            kwargs={"pk": self.first_user_post.id}))
+
+        self.first_user_post.refresh_from_db()
+        serializer = PostSerializer(self.first_user_post)
+        self.assertEqual(third_upvote_response.status_code, status.HTTP_205_RESET_CONTENT)
+        self.assertEqual(third_upvote_response.json(), serializer.data)
+
+    def test_authorized_downvote_post(self):
+        '''
+            authorized user can downvote any post
+        '''
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + str(self.second_user_token))
+        first_upvote_response = self.client.put(reverse('post_downvote',
+            kwargs={"pk": self.first_user_post.id}))
+
+        self.first_user_post.refresh_from_db()
+        serializer = PostSerializer(self.first_user_post)
+        self.assertEqual(first_upvote_response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(first_upvote_response.json(), serializer.data)
+
+        second_upvote_response = self.client.put(reverse('post_downvote',
+            kwargs={"pk": self.first_user_post.id}))
+
+        self.first_user_post.refresh_from_db()
+        serializer = PostSerializer(self.first_user_post)
+        self.assertEqual(second_upvote_response.status_code, status.HTTP_205_RESET_CONTENT)
+        self.assertEqual(second_upvote_response.json(), serializer.data)
+
+        self.client.put(reverse('post_upvote',
+            kwargs={"pk": self.first_user_post.id}))
+        third_upvote_response = self.client.put(reverse('post_downvote',
+            kwargs={"pk": self.first_user_post.id}))
+
+        self.first_user_post.refresh_from_db()
+        serializer = PostSerializer(self.first_user_post)
+        self.assertEqual(third_upvote_response.status_code, status.HTTP_205_RESET_CONTENT)
+        self.assertEqual(third_upvote_response.json(), serializer.data)
+
+    def test_unauthorized_upvote_downvote(self):
+        '''
+            unauthorized user can't upvote or downvote the post
+        '''
+        upvote_response = self.client.put(reverse('post_upvote',
+            kwargs={"pk": self.first_user_post.id}))
+        downvote_reponse = self.client.put(reverse('post_downvote',
+            kwargs={"pk": self.first_user_post.id}))
+
+        self.assertEqual(upvote_response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(downvote_reponse.status_code, status.HTTP_401_UNAUTHORIZED)
