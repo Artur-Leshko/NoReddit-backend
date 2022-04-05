@@ -43,13 +43,59 @@ class PostsAndVotesTests(APITestCase):
             id=self.second_user.id)
         self.second_userprofile.save()
 
-        self.third_user = User.objects.create_user(username='my user',
+        self.third_user = User.objects.create_user(username='my third user',
             email='klmn@mail.ru', password='qwe123')
         self.third_user.save()
         self.third_userprofile = UserProfile.objects.create(user=self.third_user,
             id=self.third_user.id)
         self.third_userprofile.save()
 
+        self.first_user_token = AccessToken.for_user(self.first_user)
+        self.second_user_token = AccessToken.for_user(self.second_user)
+        self.third_user_token = AccessToken.for_user(self.third_user)
+
         self.first_user_post = Post.objects.create(owner=self.firt_userprofile,
             title="First user post", main_text="Qwe rty")
         self.first_user_post.save()
+
+    def test_authorized_valid_post_creation(self):
+        '''
+            authorized user can create new post with valid data
+        '''
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + str(self.second_user_token))
+        response = self.client.post(reverse('posts_create'), {'title': 'Second user post',
+            'main_text': 'asdasdasd'})
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.json(), {'title': 'Second user post',
+            'main_text': 'asdasdasd'})
+
+    def test_authorized_invalid_post_creation(self):
+        '''
+            authorized user can't create new post with invalid data
+        '''
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + str(self.second_user_token))
+
+        without_title_response = self.client.post(reverse('posts_create'), {'main_text': 'ad'})
+        without_text_response = self.client.post(reverse('posts_create'), {'title': 'ad'})
+        empty_response = self.client.post(reverse('posts_create'), {})
+        blank_title_response = self.client.post(reverse('posts_create'), {'title': '',
+            'main_text': 'asds'})
+        blank_text_response = self.client.post(reverse('posts_create'), {'title': 'asd',
+            'main_text': ''})
+
+        self.assertEqual(without_title_response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(without_text_response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(empty_response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(blank_text_response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(blank_title_response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_unauthorized_post_creation(self):
+        '''
+            unauthorized user can't create new post
+        '''
+        response = self.client.post(reverse('posts_create'), {'title': 'ad',
+            'main_text': 'asdsad'})
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
+
