@@ -16,7 +16,6 @@ User = get_user_model()
 # path('<str:pk>/upvote/', views.UpvotePostDetail.as_view(), name='post_upvote'),
 # path('<str:pk>/downvote/', views.DownvotePostDetail.as_view(), name='post_downvote'),
 
-# path('<str:pk>/', views.RetrievePostView.as_view(), name='post_show'),
 # path('<str:pk>/delete/', views.DestroyPostView.as_view(), name='post_delete'),
 # path('<str:pk>/edit/', views.UpdatePostView.as_view(), name='post_edit'),
 
@@ -126,6 +125,46 @@ class PostsAndVotesTests(APITestCase):
             unauthorized user can't watch the post
         '''
         response = self.client.get(reverse('post_show',
+            kwargs={"pk": self.first_user_post.id}))
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_authorized_post_owner_delete(self):
+        '''
+            authorized post owner can delete the post
+        '''
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + str(self.first_user_token))
+        response = self.client.delete(reverse('post_delete',
+            kwargs={"pk": self.first_user_post.id}))
+
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+        try:
+            self.first_user_post.refresh_from_db()
+        except Post.DoesNotExist:
+            self.assertRaises(Post.DoesNotExist)
+
+
+    def test_authorized_post_delete(self):
+        '''
+            authorized user can't delete the post of another user
+        '''
+        old_first_user_post = self.first_user_post
+
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + str(self.second_user_token))
+        response = self.client.delete(reverse('post_delete',
+            kwargs={"pk": self.first_user_post.id}))
+
+        self.first_user_post.refresh_from_db()
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(old_first_user_post, self.first_user_post)
+
+    def test_unauthorized_post_delete(self):
+        '''
+            unauthorized user can't delete the post
+        '''
+        response = self.client.delete(reverse('post_delete',
             kwargs={"pk": self.first_user_post.id}))
 
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
