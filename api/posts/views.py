@@ -1,7 +1,7 @@
 from datetime import timedelta
 from django.db.models import Q
 from rest_framework import permissions, status
-from rest_framework import generics
+from rest_framework import generics, serializers
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
@@ -40,6 +40,12 @@ class CreatePost(generics.CreateAPIView):
 
     def perform_create(self, serializer):
         serializer.save(owner=UserProfile.objects.get(pk=self.request.user.id))
+
+    def create(self, request, *args, **kwargs):
+        try:
+            return super().create(request, *args, **kwargs)
+        except serializers.ValidationError:
+            raise CustomApiException(400, "Bad request")
 
 class UpvotePostDetail(APIView):
     '''
@@ -163,4 +169,7 @@ class UpdatePostView(generics.UpdateAPIView):
     serializer_class = PostSerializer
 
     def put(self, request, *args, **kwargs):
-        return self.partial_update(request, *args, **kwargs)
+        try:
+            return self.partial_update(request, *args, **kwargs)
+        except serializers.ValidationError:
+            raise CustomApiException(400, "Bad request!")
