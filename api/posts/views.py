@@ -7,6 +7,7 @@ from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
 
 from api.exeptions import CustomApiException
+from api.permissions import IsPostOwner
 from userprofile.models import UserProfile
 from posts.models import Post, Vote
 from .serializers import PostSerializer, CreatePostSerializer
@@ -135,3 +136,31 @@ class DownvotePostDetail(APIView):
             serializer = PostSerializer(self.get_object(pk))
 
             return Response(serializer.data, status=status.HTTP_205_RESET_CONTENT)
+
+
+class RetrievePostView(generics.RetrieveAPIView):
+    '''
+        View for showing post
+    '''
+
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = PostSerializer
+    queryset = Post.objects.all()
+
+class DestroyPostView(generics.DestroyAPIView):
+    '''
+        View for deleting post
+    '''
+    permission_classes = [IsPostOwner]
+    queryset = Post.objects.all()
+
+class UpdatePostView(generics.UpdateAPIView):
+    '''
+        View for updating post
+    '''
+    permission_classes = [IsPostOwner]
+    queryset = Post.objects.all()
+    serializer_class = PostSerializer
+
+    def put(self, request, *args, **kwargs):
+        return self.partial_update(request, *args, **kwargs)
