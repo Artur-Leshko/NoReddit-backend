@@ -208,7 +208,7 @@ class PostsAndVotesTests(APITestCase):
 
         self.assertEqual(blank_text_response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(blank_title_response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertEqual(empty_response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(empty_response.status_code, status.HTTP_200_OK)
         self.assertEqual(old_first_user_post, self.first_user_post)
 
     def test_authorized_post_update(self):
