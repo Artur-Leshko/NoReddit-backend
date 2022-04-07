@@ -61,7 +61,9 @@ class PostsAndVotesTests(APITestCase):
         '''
             unauthorized user can't get popular posts
         '''
+        response = self.client.get(reverse('posts_popular'))
 
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_authorized_valid_post_creation(self):
         '''
