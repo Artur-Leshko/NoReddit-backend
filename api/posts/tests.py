@@ -52,6 +52,17 @@ class PostsAndVotesTests(APITestCase):
             title="First user post", main_text="Qwe rty")
         self.first_user_post.save()
 
+    def test_authorized_popular_post(self):
+        '''
+            authorized user can get popular posts
+        '''
+
+    def test_unauthorized_popular_post(self):
+        '''
+            unauthorized user can't get popular posts
+        '''
+
+
     def test_authorized_valid_post_creation(self):
         '''
             authorized user can create new post with valid data
