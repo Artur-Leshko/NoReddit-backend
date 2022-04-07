@@ -18,8 +18,8 @@ class PostSerializer(serializers.ModelSerializer):
             Meta class for PostSerializer
         '''
         model = Post
-        fields = ['owner', 'title', 'main_text', 'upvotes', 'downvotes']
-        read_only_fields = ['owner', 'upvotes', 'downvotes']
+        fields = ['id', 'owner', 'title', 'main_text', 'upvotes', 'downvotes']
+        read_only_fields = ['id', 'owner', 'upvotes', 'downvotes']
 
     def get_upvotes(self, obj):
         '''
@@ -44,4 +44,4 @@ class CreatePostSerializer(serializers.ModelSerializer):
             Meta class for CreatePostSerializer
         '''
         model = Post
-        fields = ['title', 'main_text']
+        fields = ['id', 'title', 'main_text']

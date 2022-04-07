@@ -1,5 +1,6 @@
-from datetime import timedelta
-from django.db.models import Q
+from datetime import datetime, timedelta
+import pytz as timezone
+from django.db.models import Q, F
 from rest_framework import permissions, status
 from rest_framework import generics
 from rest_framework.views import APIView
@@ -18,7 +19,7 @@ class PostPagination(PageNumberPagination):
     '''
     page_size = 10
     page_size_query_param = 'page_size'
-    max_page_size = 100
+    max_page_size = 1000
 
 class PopularPostsList(generics.ListAPIView):
     '''
@@ -28,7 +29,13 @@ class PopularPostsList(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticated]
     pagination_class = PostPagination
     queryset = Post.objects.all()
-    # Q(created_at=timedelta(days=3) & Q(votes__gte=50) | Q(created_at=timedelta(days=1)))
+
+    def get_queryset(self):
+        post = Post.objects.get(main_text='Just as I envisaged!')
+        print(post.votes.all())
+        posts = Post.objects.filter(Q(created_at__gte=datetime.now(timezone.utc) - timedelta(days=3)) |
+            Q(created_at__gte=datetime.now(timezone.utc) - timedelta(hours=1)))
+        return posts
 
 class CreatePost(generics.CreateAPIView):
     '''
