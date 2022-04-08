@@ -28,6 +28,20 @@ class Post(models.Model):
     def __str__(self):
         return str(self.title)
 
+    @property
+    def upvotes(self):
+        '''
+            returns count of upvotes for post
+        '''
+        return Vote.objects.filter(post=self.id, vote_type='up').count()
+
+    @property
+    def downvotes(self):
+        '''
+            returns count of downvotes for post
+        '''
+        return Vote.objects.filter(post=self.id, vote_type='down').count()
+
 
 class Vote(models.Model):
     '''
