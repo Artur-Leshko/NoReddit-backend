@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from api.userprofile.serializers import UserProfileSerializer
+from api.userprofile.serializers import UserProfilePostSerializer
 from posts.models import Post
 
 
@@ -9,7 +9,7 @@ class PostSerializer(serializers.ModelSerializer):
         Serializer for Post model
     '''
 
-    owner = UserProfileSerializer()
+    owner = UserProfilePostSerializer()
 
     class Meta:
         '''

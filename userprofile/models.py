@@ -107,3 +107,7 @@ class UserProfile(models.Model):
         if not self.firstname or not self.surname:
             return f'{self.user.username}'
         return f'{self.firstname} {self.surname}'
+
+    @property
+    def username(self):
+        return self.user.username
