@@ -1,0 +1,192 @@
+from datetime import datetime, timedelta
+import pytz as timezone
+from django.db.models import Q, F
+from rest_framework import permissions, status
+from rest_framework import generics, serializers
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.pagination import PageNumberPagination
+
+from api.exeptions import CustomApiException
+from api.permissions import IsPostOwner
+from userprofile.models import UserProfile
+from posts.models import Post, Vote
+from .serializers import PostSerializer, CreatePostSerializer
+
+QUERY_STRING_FOR_POPULAR_POSTS = '''
+    SELECT pp.id, pp.title, pp.main_text, pp.owner_id, COUNT(pv) AS UpvotesCount
+        FROM posts_post pp
+            INNER JOIN posts_vote pv ON pp.id = pv.post_id
+                AND pv.vote_type = 'up'
+                AND pp.created_at >= NOW() - INTERVAL '3 DAY'
+    GROUP BY pp.id
+    HAVING COUNT(pv.vote_type='up')>=3
+'''
+
+class PostPagination(PageNumberPagination):
+    '''
+        Number of posts for pagiantion
+    '''
+    page_size = 10
+    page_size_query_param = 'page_size'
+    max_page_size = 1000
+
+class PopularPostsList(generics.ListAPIView):
+    '''
+        Posts list for main page
+    '''
+    serializer_class = PostSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    pagination_class = PostPagination
+    queryset = Post.objects.all()
+
+    def get_queryset(self):
+        posts = Post.objects.raw(QUERY_STRING_FOR_POPULAR_POSTS)
+        # posts = Post.objects.filter(Q(created_at__gte=datetime.now(timezone.utc) - timedelta(days=3)) |
+        #     Q(created_at__gte=datetime.now(timezone.utc) - timedelta(days=1)))
+
+        return posts
+
+class CreatePost(generics.CreateAPIView):
+    '''
+        Creating post
+    '''
+    serializer_class = CreatePostSerializer
+    queryset = Post.objects.all()
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        serializer.save(owner=UserProfile.objects.get(pk=self.request.user.id))
+
+    def create(self, request, *args, **kwargs):
+        try:
+            return super().create(request, *args, **kwargs)
+        except serializers.ValidationError:
+            raise CustomApiException(400, "Bad request")
+
+class UpvotePostDetail(APIView):
+    '''
+        Upvotes and returns renewed Post
+    '''
+    permisson_classes = [permissions.IsAuthenticated]
+
+    def get_object(self, pk):
+        '''
+            returns Post object
+        '''
+        try:
+            post = Post.objects.get(pk=pk)
+        except Post.DoesNotExist:
+            raise CustomApiException(404, 'This post does not exist!')
+
+        return post
+
+    def put(self, request, pk):
+        '''
+            Add or delete upvote from post
+        '''
+
+        current_vote = Vote.objects.filter(owner=request.user.id, post=pk)
+        current_vote_values = current_vote.values()
+
+        if not current_vote:
+            new_vote = Vote.objects.create(owner=UserProfile.objects.get(pk=request.user.id),
+                post=Post.objects.get(pk=pk), vote_type='up')
+            new_vote.save()
+
+            serializer = PostSerializer(self.get_object(pk))
+
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        elif current_vote_values[0]['vote_type'] == 'down':
+            current_vote[0].vote_type = 'up'
+            current_vote[0].save()
+
+            serializer = PostSerializer(self.get_object(pk))
+
+            return Response(serializer.data, status=status.HTTP_205_RESET_CONTENT)
+        else:
+            current_vote.delete()
+
+            serializer = PostSerializer(self.get_object(pk))
+
+            return Response(serializer.data, status=status.HTTP_205_RESET_CONTENT)
+
+
+class DownvotePostDetail(APIView):
+    '''
+        Downvotes and returns renewed post
+    '''
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self, pk):
+        '''
+            returns Post object
+        '''
+
+        try:
+            post = Post.objects.get(pk=pk)
+        except Post.DoesNotExist:
+            raise CustomApiException(404, 'This post does not exist!')
+        return post
+
+    def put(self, request, pk):
+        '''
+            Add or delete downote for post
+        '''
+
+        current_vote = Vote.objects.filter(owner=request.user.id, post=pk)
+        current_vote_values = current_vote.values()
+
+        if not current_vote:
+            new_vote = Vote.objects.create(owner=UserProfile.objects.get(pk=request.user.id),
+                post=Post.objects.get(pk=pk), vote_type='down')
+            new_vote.save()
+
+            serializer = PostSerializer(self.get_object(pk))
+
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        elif current_vote_values[0]['vote_type'] == 'up':
+            current_vote[0].vote_type = 'down'
+            current_vote[0].save()
+
+            serializer = PostSerializer(self.get_object(pk))
+
+            return Response(serializer.data, status=status.HTTP_205_RESET_CONTENT)
+        else:
+            current_vote.delete()
+
+            serializer = PostSerializer(self.get_object(pk))
+
+            return Response(serializer.data, status=status.HTTP_205_RESET_CONTENT)
+
+
+class RetrievePostView(generics.RetrieveAPIView):
+    '''
+        View for showing post
+    '''
+
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = PostSerializer
+    queryset = Post.objects.all()
+
+class DestroyPostView(generics.DestroyAPIView):
+    '''
+        View for deleting post
+    '''
+    permission_classes = [IsPostOwner]
+    queryset = Post.objects.all()
+
+class UpdatePostView(generics.UpdateAPIView):
+    '''
+        View for updating post
+    '''
+    permission_classes = [IsPostOwner]
+    queryset = Post.objects.all()
+    serializer_class = PostSerializer
+
+    def put(self, request, *args, **kwargs):
+        try:
+            return self.partial_update(request, *args, **kwargs)
+        except serializers.ValidationError:
+            raise CustomApiException(400, "Bad request!")
