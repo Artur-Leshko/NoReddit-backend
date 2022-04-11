@@ -15,8 +15,10 @@ from .serializers import PostSerializer, CreatePostSerializer
 
 QUERY_STRING_FOR_POPULAR_POSTS = '''
     SELECT pp.id, pp.title, pp.main_text, pp.owner_id, COUNT(pv) AS UpvotesCount
-    FROM posts_post pp
-    INNER JOIN posts_vote pv ON pp.id = pv.post_id and pv.vote_type = 'up'
+        FROM posts_post pp
+            INNER JOIN posts_vote pv ON pp.id = pv.post_id
+                AND pv.vote_type = 'up'
+                AND pp.created_at >= NOW() - INTERVAL '3 DAY'
     GROUP BY pp.id
     HAVING COUNT(pv.vote_type='up')>=3
 '''
