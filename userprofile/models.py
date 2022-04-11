@@ -13,7 +13,6 @@ def user_path(instance, filename):
     print('user_path: ', image_name)
     return 'userprofile/user_{0}/{1}'.format(instance.user.id, image_name)
 
-
 class UserManager(BaseUserManager):
     '''
         Manager for custom User
@@ -119,3 +118,7 @@ class UserProfile(models.Model):
         if not self.firstname or not self.surname:
             return f'{self.user.username}'
         return f'{self.firstname} {self.surname}'
+
+    @property
+    def username(self):
+        return self.user.username

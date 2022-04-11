@@ -48,6 +48,9 @@ atlassian-ide-plugin.xml
 # Python #
 *.py[cod]
 *$py.class
+fill_db.py
+create_db.py
+drop_db.py
 
 # Distribution / packaging
 .Python build/

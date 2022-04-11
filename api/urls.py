@@ -13,4 +13,7 @@ urlpatterns = [
 
     # USER PROFILE
     path('user/', include('api.userprofile.urls')),
+
+    # POSTS
+    path('posts/', include('api.posts.urls')),
 ]
