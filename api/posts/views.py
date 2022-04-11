@@ -1,6 +1,3 @@
-from datetime import datetime, timedelta
-import pytz as timezone
-from django.db.models import Q, F
 from rest_framework import permissions, status
 from rest_framework import generics, serializers
 from rest_framework.views import APIView
@@ -42,8 +39,6 @@ class PopularPostsList(generics.ListAPIView):
 
     def get_queryset(self):
         posts = Post.objects.raw(QUERY_STRING_FOR_POPULAR_POSTS)
-        # posts = Post.objects.filter(Q(created_at__gte=datetime.now(timezone.utc) - timedelta(days=3)) |
-        #     Q(created_at__gte=datetime.now(timezone.utc) - timedelta(days=1)))
 
         return posts
 
