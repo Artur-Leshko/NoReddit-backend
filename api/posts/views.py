@@ -13,6 +13,14 @@ from userprofile.models import UserProfile
 from posts.models import Post, Vote
 from .serializers import PostSerializer, CreatePostSerializer
 
+QUERY_STRING_FOR_POPULAR_POSTS = '''
+    SELECT pp.id, pp.title, pp.main_text, pp.owner_id, COUNT(pv) AS UpvotesCount
+    FROM posts_post pp
+    INNER JOIN posts_vote pv ON pp.id = pv.post_id and pv.vote_type = 'up'
+    GROUP BY pp.id
+    HAVING COUNT(pv.vote_type='up')>=3
+'''
+
 class PostPagination(PageNumberPagination):
     '''
         Number of posts for pagiantion
@@ -31,10 +39,10 @@ class PopularPostsList(generics.ListAPIView):
     queryset = Post.objects.all()
 
     def get_queryset(self):
-        post = Post.objects.get(main_text='Just as I envisaged!')
-        print(post.votes.all())
-        posts = Post.objects.filter(Q(created_at__gte=datetime.now(timezone.utc) - timedelta(days=3)) |
-            Q(created_at__gte=datetime.now(timezone.utc) - timedelta(hours=1)))
+        posts = Post.objects.raw(QUERY_STRING_FOR_POPULAR_POSTS)
+        # posts = Post.objects.filter(Q(created_at__gte=datetime.now(timezone.utc) - timedelta(days=3)) |
+        #     Q(created_at__gte=datetime.now(timezone.utc) - timedelta(days=1)))
+
         return posts
 
 class CreatePost(generics.CreateAPIView):
