@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from userprofile.models import UserProfile
 from django.contrib.auth import get_user_model
+from api.exeptions import CustomApiException
 
 User = get_user_model()
 
@@ -31,7 +32,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
         '''
 
         model = UserProfile
-        fields = ['id', 'user', 'firstname', 'surname']
+        fields = ['id', 'user', 'avatar', 'firstname', 'surname']
 
     def update(self, instance, validated_data):
         user_data = {}
@@ -41,9 +42,9 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
         instance.firstname = validated_data.get('firstname', instance.firstname)
         instance.surname = validated_data.get('surname', instance.surname)
+        instance.avatar = validated_data.get('avatar', instance.avatar)
         instance.save()
 
-        user.email = user_data.get('email', user.email)
         user.username = user_data.get('username', user.username)
         user.save()
 

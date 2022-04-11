@@ -1,6 +1,17 @@
 import uuid
+import os
 from django.db import models
+from django.conf import settings
 from django.contrib.auth.models import (BaseUserManager, AbstractBaseUser)
+
+def user_path(instance, filename):
+    '''
+        makes path  of the file using user id
+    '''
+    splited_filename = str(filename).split('.')
+    image_name = str(uuid.uuid4()) + '.' + splited_filename[-1]
+    print('user_path: ', image_name)
+    return 'userprofile/user_{0}/{1}'.format(instance.user.id, image_name)
 
 class UserManager(BaseUserManager):
     '''
@@ -88,7 +99,7 @@ class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     firstname = models.CharField(verbose_name="user firstname", max_length=200, blank=True)
     surname = models.CharField(verbose_name="user surname", max_length=200, blank=True)
-    # avatar = models.ForeignKey(Picture, )
+    avatar = models.ImageField(upload_to=user_path, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
