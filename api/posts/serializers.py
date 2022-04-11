@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
-from api.userprofile.serializers import UserProfileSerializer
-from posts.models import Post, Vote
+from api.userprofile.serializers import UserProfilePostSerializer
+from posts.models import Post
 
 
 class PostSerializer(serializers.ModelSerializer):
@@ -9,29 +9,15 @@ class PostSerializer(serializers.ModelSerializer):
         Serializer for Post model
     '''
 
-    owner = UserProfileSerializer()
-    upvotes = serializers.SerializerMethodField()
-    downvotes = serializers.SerializerMethodField()
+    owner = UserProfilePostSerializer()
 
     class Meta:
         '''
             Meta class for PostSerializer
         '''
         model = Post
-        fields = ['owner', 'title', 'main_text', 'upvotes', 'downvotes']
-        read_only_fields = ['owner', 'upvotes', 'downvotes']
-
-    def get_upvotes(self, obj):
-        '''
-            returns count of upvotes for post
-        '''
-        return Vote.objects.filter(post=obj.id, vote_type='up').count()
-
-    def get_downvotes(self, obj):
-        '''
-            returns count of downvotes for post
-        '''
-        return Vote.objects.filter(post=obj.id, vote_type='down').count()
+        fields = ['id', 'owner', 'title', 'main_text', 'upvotes', 'downvotes']
+        read_only_fields = ['id', 'owner', 'upvotes', 'downvotes']
 
 
 class CreatePostSerializer(serializers.ModelSerializer):
@@ -44,4 +30,4 @@ class CreatePostSerializer(serializers.ModelSerializer):
             Meta class for CreatePostSerializer
         '''
         model = Post
-        fields = ['title', 'main_text']
+        fields = ['id', 'title', 'main_text']
