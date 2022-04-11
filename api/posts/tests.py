@@ -7,11 +7,8 @@ from rest_framework_simplejwt.tokens import AccessToken
 from userprofile.models import UserProfile
 from posts.models import Post, Vote
 from .serializers import PostSerializer, CreatePostSerializer
-from api.exeptions import CustomApiException
 
 User = get_user_model()
-
-# path('popular/', views.PopularPostsList.as_view(), name='posts_popular'),
 
 class PostsAndVotesTests(APITestCase):
     '''
@@ -52,15 +49,66 @@ class PostsAndVotesTests(APITestCase):
             title="First user post", main_text="Qwe rty")
         self.first_user_post.save()
 
+        self.second_user_post = Post.objects.create(owner=self.second_userprofile,
+            title="Second user post", main_text="Qwe rty")
+        self.second_user_post.save()
+
+        self.third_user_post = Post.objects.create(owner=self.third_userprofile,
+            title="Third user test post", main_text="Qwe rty")
+        self.third_user_post.save()
+
+        self.first_user_first_post_vote = Vote.objects.create(owner=self.firt_userprofile,
+            post=self.first_user_post, vote_type='up')
+        self.first_user_first_post_vote.save()
+        self.second_user_first_post_vote = Vote.objects.create(owner=self.second_userprofile,
+            post=self.first_user_post, vote_type='up')
+        self.second_user_first_post_vote.save()
+        self.third_user_first_post_vote = Vote.objects.create(owner=self.third_userprofile,
+            post=self.first_user_post, vote_type='up')
+        self.third_user_first_post_vote.save()
+
+        self.first_user_second_post_vote = Vote.objects.create(owner=self.firt_userprofile,
+            post=self.second_user_post, vote_type='up')
+        self.first_user_second_post_vote.save()
+        self.second_user_second_post_vote = Vote.objects.create(owner=self.second_userprofile,
+            post=self.second_user_post, vote_type='up')
+        self.second_user_second_post_vote.save()
+        self.third_user_second_post_vote = Vote.objects.create(owner=self.third_userprofile,
+            post=self.second_user_post, vote_type='down')
+        self.third_user_second_post_vote.save()
+
+
+    def test_authorized_popular_post(self):
+        '''
+            authorized user can get popular posts
+        '''
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + str(self.first_user_token))
+        response = self.client.get(reverse('posts_popular'))
+
+        serializer = PostSerializer(self.first_user_post)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.json().get('results')), 1)
+        self.assertEqual(response.json().get('results')[0], serializer.data)
+
+
+    def test_unauthorized_popular_post(self):
+        '''
+            unauthorized user can't get popular posts
+        '''
+        response = self.client.get(reverse('posts_popular'))
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
     def test_authorized_valid_post_creation(self):
         '''
             authorized user can create new post with valid data
         '''
         self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + str(self.second_user_token))
-        response = self.client.post(reverse('posts_create'), {'title': 'Second user post',
+        response = self.client.post(reverse('posts_create'), {'title': 'Third user post',
             'main_text': 'asdasdasd'})
 
-        serializer = CreatePostSerializer(Post.objects.get(title='Second user post'))
+        serializer = CreatePostSerializer(Post.objects.get(title='Third user post'))
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(response.json(), serializer.data)
@@ -217,13 +265,13 @@ class PostsAndVotesTests(APITestCase):
         '''
             unauthorized user can't update the post
         '''
-        old_first_user_post = self.first_user_post
+        old_third_user_post = self.third_user_post
         response = self.client.put(reverse('post_edit',
-            kwargs={"pk": self.first_user_post.id}), {'title': 'hello'})
-        self.first_user_post.refresh_from_db()
+            kwargs={"pk": self.third_user_post.id}), {'title': 'hello'})
+        self.third_user_post.refresh_from_db()
 
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-        self.assertEqual(old_first_user_post, self.first_user_post)
+        self.assertEqual(old_third_user_post, self.third_user_post)
 
     def test_authorized_upvote_post(self):
         '''
@@ -231,28 +279,28 @@ class PostsAndVotesTests(APITestCase):
         '''
         self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + str(self.second_user_token))
         first_upvote_response = self.client.put(reverse('post_upvote',
-            kwargs={"pk": self.first_user_post.id}))
+            kwargs={"pk": self.third_user_post.id}))
 
-        self.first_user_post.refresh_from_db()
-        serializer = PostSerializer(self.first_user_post)
+        self.third_user_post.refresh_from_db()
+        serializer = PostSerializer(self.third_user_post)
         self.assertEqual(first_upvote_response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(first_upvote_response.json(), serializer.data)
 
         second_upvote_response = self.client.put(reverse('post_upvote',
-            kwargs={"pk": self.first_user_post.id}))
+            kwargs={"pk": self.third_user_post.id}))
 
-        self.first_user_post.refresh_from_db()
-        serializer = PostSerializer(self.first_user_post)
+        self.third_user_post.refresh_from_db()
+        serializer = PostSerializer(self.third_user_post)
         self.assertEqual(second_upvote_response.status_code, status.HTTP_205_RESET_CONTENT)
         self.assertEqual(second_upvote_response.json(), serializer.data)
 
         self.client.put(reverse('post_downvote',
-            kwargs={"pk": self.first_user_post.id}))
+            kwargs={"pk": self.third_user_post.id}))
         third_upvote_response = self.client.put(reverse('post_upvote',
-            kwargs={"pk": self.first_user_post.id}))
+            kwargs={"pk": self.third_user_post.id}))
 
-        self.first_user_post.refresh_from_db()
-        serializer = PostSerializer(self.first_user_post)
+        self.third_user_post.refresh_from_db()
+        serializer = PostSerializer(self.third_user_post)
         self.assertEqual(third_upvote_response.status_code, status.HTTP_205_RESET_CONTENT)
         self.assertEqual(third_upvote_response.json(), serializer.data)
 
@@ -262,28 +310,28 @@ class PostsAndVotesTests(APITestCase):
         '''
         self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + str(self.second_user_token))
         first_upvote_response = self.client.put(reverse('post_downvote',
-            kwargs={"pk": self.first_user_post.id}))
+            kwargs={"pk": self.third_user_post.id}))
 
-        self.first_user_post.refresh_from_db()
-        serializer = PostSerializer(self.first_user_post)
+        self.third_user_post.refresh_from_db()
+        serializer = PostSerializer(self.third_user_post)
         self.assertEqual(first_upvote_response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(first_upvote_response.json(), serializer.data)
 
         second_upvote_response = self.client.put(reverse('post_downvote',
-            kwargs={"pk": self.first_user_post.id}))
+            kwargs={"pk": self.third_user_post.id}))
 
-        self.first_user_post.refresh_from_db()
-        serializer = PostSerializer(self.first_user_post)
+        self.third_user_post.refresh_from_db()
+        serializer = PostSerializer(self.third_user_post)
         self.assertEqual(second_upvote_response.status_code, status.HTTP_205_RESET_CONTENT)
         self.assertEqual(second_upvote_response.json(), serializer.data)
 
         self.client.put(reverse('post_upvote',
-            kwargs={"pk": self.first_user_post.id}))
+            kwargs={"pk": self.third_user_post.id}))
         third_upvote_response = self.client.put(reverse('post_downvote',
-            kwargs={"pk": self.first_user_post.id}))
+            kwargs={"pk": self.third_user_post.id}))
 
-        self.first_user_post.refresh_from_db()
-        serializer = PostSerializer(self.first_user_post)
+        self.third_user_post.refresh_from_db()
+        serializer = PostSerializer(self.third_user_post)
         self.assertEqual(third_upvote_response.status_code, status.HTTP_205_RESET_CONTENT)
         self.assertEqual(third_upvote_response.json(), serializer.data)
 
@@ -292,9 +340,9 @@ class PostsAndVotesTests(APITestCase):
             unauthorized user can't upvote or downvote the post
         '''
         upvote_response = self.client.put(reverse('post_upvote',
-            kwargs={"pk": self.first_user_post.id}))
+            kwargs={"pk": self.third_user_post.id}))
         downvote_reponse = self.client.put(reverse('post_downvote',
-            kwargs={"pk": self.first_user_post.id}))
+            kwargs={"pk": self.third_user_post.id}))
 
         self.assertEqual(upvote_response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertEqual(downvote_reponse.status_code, status.HTTP_401_UNAUTHORIZED)

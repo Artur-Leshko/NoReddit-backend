@@ -1,5 +1,6 @@
-from datetime import timedelta
-from django.db.models import Q
+from datetime import datetime, timedelta
+import pytz as timezone
+from django.db.models import Q, F
 from rest_framework import permissions, status
 from rest_framework import generics, serializers
 from rest_framework.views import APIView
@@ -12,13 +13,23 @@ from userprofile.models import UserProfile
 from posts.models import Post, Vote
 from .serializers import PostSerializer, CreatePostSerializer
 
+QUERY_STRING_FOR_POPULAR_POSTS = '''
+    SELECT pp.id, pp.title, pp.main_text, pp.owner_id, COUNT(pv) AS UpvotesCount
+        FROM posts_post pp
+            INNER JOIN posts_vote pv ON pp.id = pv.post_id
+                AND pv.vote_type = 'up'
+                AND pp.created_at >= NOW() - INTERVAL '3 DAY'
+    GROUP BY pp.id
+    HAVING COUNT(pv.vote_type='up')>=3
+'''
+
 class PostPagination(PageNumberPagination):
     '''
         Number of posts for pagiantion
     '''
     page_size = 10
     page_size_query_param = 'page_size'
-    max_page_size = 100
+    max_page_size = 1000
 
 class PopularPostsList(generics.ListAPIView):
     '''
@@ -28,7 +39,13 @@ class PopularPostsList(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticated]
     pagination_class = PostPagination
     queryset = Post.objects.all()
-    # Q(created_at=timedelta(days=3) & Q(votes__gte=50) | Q(created_at=timedelta(days=1)))
+
+    def get_queryset(self):
+        posts = Post.objects.raw(QUERY_STRING_FOR_POPULAR_POSTS)
+        # posts = Post.objects.filter(Q(created_at__gte=datetime.now(timezone.utc) - timedelta(days=3)) |
+        #     Q(created_at__gte=datetime.now(timezone.utc) - timedelta(days=1)))
+
+        return posts
 
 class CreatePost(generics.CreateAPIView):
     '''

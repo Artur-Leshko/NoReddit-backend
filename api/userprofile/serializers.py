@@ -48,3 +48,16 @@ class UserProfileSerializer(serializers.ModelSerializer):
         user.save()
 
         return instance
+
+class UserProfilePostSerializer(serializers.ModelSerializer):
+    '''
+        Serializer class for Userprofile model that user in post urls
+    '''
+
+    class Meta:
+        '''
+            Meta class for UserProfilePost serializer
+        '''
+        model = UserProfile
+        fields = ['id', 'username', 'firstname', 'surname']
+        read_only_fields = ['id', 'username', 'firstname', 'surname']
