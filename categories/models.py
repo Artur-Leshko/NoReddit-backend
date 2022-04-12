@@ -2,10 +2,14 @@ import uuid
 from django.db import models
 from posts.models import Post
 
-def category_path():
+def category_path(instance, filename):
     '''
         makes path of the file using category id
     '''
+    splited_filename = str(filename).split('.')
+    image_name = str(uuid.uuid4()) + '.' + splited_filename[-1]
+    return 'category/{0}/{1}'.format(instance.id, image_name)
+
 
 class Category(models.Model):
     '''

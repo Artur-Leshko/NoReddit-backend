@@ -8,7 +8,6 @@ def user_path(instance, filename):
     '''
     splited_filename = str(filename).split('.')
     image_name = str(uuid.uuid4()) + '.' + splited_filename[-1]
-    print('user_path: ', image_name)
     return 'userprofile/user_{0}/{1}'.format(instance.user.id, image_name)
 
 class UserManager(BaseUserManager):
@@ -105,7 +104,7 @@ class UserProfile(models.Model):
 
     class Meta:
         '''
-            Meat class for UserProfile
+            Meta class for UserProfile
         '''
 
         verbose_name = 'UserProfile'
