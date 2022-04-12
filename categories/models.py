@@ -15,6 +15,7 @@ class Category(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=30, blank=False)
     category_image = models.ImageField(upload_to=category_path, blank=False, null=False)
+    posts = models.ManyToManyField(Post)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
