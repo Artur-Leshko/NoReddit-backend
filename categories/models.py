@@ -33,3 +33,10 @@ class Category(models.Model):
 
     def __str__(self):
         return f'{self.name}'
+
+    @property
+    def posts_count(self):
+        '''
+            returns count of posts that related with particular category
+        '''
+        return Post.objects.filter(category__id=self.id).count()
