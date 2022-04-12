@@ -16,7 +16,7 @@ class CustomCategoryAdmin(BaseUserAdmin):
     list_filter = ['name']
 
     fieldsets = (
-        ('Data fields', { 'fields': ('name', 'category_image') })
+        ('Data fields', { 'fields': ('name', 'category_image') }),
     )
 
     add_fieldsets = (
