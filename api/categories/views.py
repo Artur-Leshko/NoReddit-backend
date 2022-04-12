@@ -22,6 +22,14 @@ class CategoryRetrieveView(generics.RetrieveAPIView):
     queryset = Category.objects.all()
     lookup_field = "pk"
 
+class CategoryCreateView(generics.CreateAPIView):
+    '''
+        Category create view
+    '''
+    serializer_class = CategorySerializer
+    permission_classes = [permissions.IsAdminUser]
+    queryset = Category.objects.all()
+
 class CategoryUpdateView(generics.UpdateAPIView):
     '''
         Category update view
