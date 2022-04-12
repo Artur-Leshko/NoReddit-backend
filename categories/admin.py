@@ -1,10 +1,9 @@
 from django.contrib import admin
-from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
 from .models import Category
 from .forms import AdminCreationCategoryForm, AdminUpdateCategoryForm
 
-class CustomCategoryAdmin(BaseUserAdmin):
+class CustomCategoryAdmin(admin.ModelAdmin):
     '''
         Admin view of Category
     '''
