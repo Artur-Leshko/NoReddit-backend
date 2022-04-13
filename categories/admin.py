@@ -12,16 +12,17 @@ class CustomCategoryAdmin(admin.ModelAdmin):
     add_form = AdminCreationCategoryForm
 
     list_display = ['id', 'name']
-    list_filter = ['name']
+    list_filter = ['created_at']
 
     fieldsets = (
-        ('Data fields', { 'fields': ('name', 'category_image') }),
+        ('ID field', { 'fields': ('id',) }),
+        ('Data fields', { 'fields': ('name', 'description', 'category_image') })
     )
 
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
-            'fields': ('name', 'category_image')
+            'fields': ('name', 'description', 'category_image')
         })
     )
 
