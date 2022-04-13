@@ -15,7 +15,8 @@ class CustomCategoryAdmin(admin.ModelAdmin):
     list_filter = ['created_at']
 
     fieldsets = (
-        ('Data fields', { 'fields': ('name', 'description', 'category_image') }),
+        ('ID field', { 'fields': ('id',) }),
+        ('Data fields', { 'fields': ('name', 'description', 'category_image') })
     )
 
     add_fieldsets = (

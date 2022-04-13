@@ -16,7 +16,7 @@ class Category(models.Model):
         Model for Category
     '''
 
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4)
     name = models.CharField(max_length=30, blank=False, unique=True)
     description = models.TextField(blank=False)
     category_image = models.ImageField(upload_to=category_path, blank=False, null=False)
