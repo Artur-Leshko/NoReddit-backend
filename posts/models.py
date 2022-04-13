@@ -42,6 +42,13 @@ class Post(models.Model):
         '''
         return Vote.objects.filter(post=self.id, vote_type='down').count()
 
+    @property
+    def categories(self):
+        '''
+            returns all categories that related to this post
+        '''
+        return self.category_set.all()
+
 
 class Vote(models.Model):
     '''
