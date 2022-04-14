@@ -1,5 +1,7 @@
+import mock
 from django.contrib.auth import get_user_model
 from django.urls import reverse
+from django.core.files import File
 from rest_framework import status
 from rest_framework.test import APITestCase
 from rest_framework_simplejwt.tokens import AccessToken
@@ -38,7 +40,13 @@ class CategoriesTests(APITestCase):
         self.first_user_token = AccessToken.for_user(self.first_user)
         self.second_user_token = AccessToken.for_user(self.second_user)
 
+
+        file_mock = mock.MagicMock(spec=File)
+        file_mock.name = 'photo.jpg'
+
         self.first_category = Category.objects.create(title="Tech",
-            main_text="Something about technologies")
+            main_text="Something about technologies", category_image=file_mock.name)
         self.second_category = Category.objects.create(title="Fun",
-            main_text="Some funny jokes here")
+            main_text="Some funny jokes here", category_image=file_mock.name)
+
+
