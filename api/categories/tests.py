@@ -71,3 +71,29 @@ class CategoriesTests(APITestCase):
         response = self.client.get(reverse('categories_list'))
 
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_authorized_category_detail(self):
+        '''
+            every authorized user can get category details
+        '''
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + str(self.first_user_token))
+        response = self.client.get(reverse('category_detail',
+            kwargs={"pk": self.first_category.id}
+        ))
+
+        serializer = CategorySerializer(self.first_category)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.json().get('id'), serializer.data.get('id'))
+
+    def test_unauthorized_category_detail(self):
+        '''
+            unauthorized user can't get category details
+        '''
+        response = self.client.get(reverse('category_detail',
+            kwargs={"pk": self.first_category.id}
+        ))
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
