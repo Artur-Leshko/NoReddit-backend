@@ -44,9 +44,30 @@ class CategoriesTests(APITestCase):
         file_mock = mock.MagicMock(spec=File)
         file_mock.name = 'photo.jpg'
 
-        self.first_category = Category.objects.create(title="Tech",
-            main_text="Something about technologies", category_image=file_mock.name)
-        self.second_category = Category.objects.create(title="Fun",
-            main_text="Some funny jokes here", category_image=file_mock.name)
+        self.first_category = Category.objects.create(name="Fun",
+            description="Some funny jokes here", category_image=file_mock.name)
+        self.second_category = Category.objects.create(name="Tech",
+            description="Something about technologies", category_image=file_mock.name)
 
 
+    def test_authorized_category_list(self):
+        '''
+            every authorized user can get all categories
+        '''
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + str(self.first_user_token))
+        response = self.client.get(reverse('categories_list'))
+
+        first_serializer = CategorySerializer(self.first_category)
+        second_serializer = CategorySerializer(self.second_category)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.json()[0].get('id'), first_serializer.data.get('id'))
+        self.assertEqual(response.json()[1].get('id'), second_serializer.data.get('id'))
+
+    def test_unauthorized_category_list(self):
+        '''
+            unauthorized user can't get all categories
+        '''
+        response = self.client.get(reverse('categories_list'))
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
