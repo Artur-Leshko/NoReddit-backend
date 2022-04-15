@@ -13,7 +13,6 @@ class CategorySerializer(serializers.ModelSerializer):
         '''
         model = Category
         fields = ['id', 'name', 'description', 'category_image']
-        read_only_fields = ['id', 'name', 'description', 'category_image']
 
 class CategoryDetailSerializer(serializers.ModelSerializer):
     '''
