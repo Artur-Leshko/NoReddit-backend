@@ -30,6 +30,12 @@ class CategoryCreateView(generics.CreateAPIView):
     permission_classes = [permissions.IsAdminUser]
     queryset = Category.objects.all()
 
+    def post(self, request, *args, **kwargs):
+        try:
+            return super().post(request, *args, **kwargs)
+        except serializers.ValidationError:
+            raise CustomApiException(404, "Bad request!")
+
 class CategoryUpdateView(generics.UpdateAPIView):
     '''
         Category update view
