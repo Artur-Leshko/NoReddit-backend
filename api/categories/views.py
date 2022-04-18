@@ -34,7 +34,7 @@ class CategoryCreateView(generics.CreateAPIView):
         try:
             return super().post(request, *args, **kwargs)
         except serializers.ValidationError:
-            raise CustomApiException(404, "Bad request!")
+            raise CustomApiException(400, "Bad request!")
 
 class CategoryUpdateView(generics.UpdateAPIView):
     '''
@@ -48,7 +48,7 @@ class CategoryUpdateView(generics.UpdateAPIView):
         try:
             return self.partial_update(request, *args, **kwargs)
         except serializers.ValidationError:
-            raise CustomApiException(404, "Bad request!")
+            raise CustomApiException(400, "Bad request!")
 
 class CategoryDeleteView(generics.DestroyAPIView):
     '''

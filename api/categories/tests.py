@@ -66,6 +66,14 @@ class CategoriesTests(APITestCase):
             'category_image': file_image
         }
 
+        self.edit_data = {
+            'name': 'Jokes'
+        }
+
+        self.edit_invalid_data = {
+            'name': ''
+        }
+
     @staticmethod
     def get_image_file(name='test.png', ext='png', size=(50, 50), color=(256, 0, 0)):
         '''
@@ -139,12 +147,12 @@ class CategoriesTests(APITestCase):
 
     def test_admin_invalid_category_create(self):
         '''
-            admin can't create new categories with nvalid data
+            admin can't create new categories with invalid data
         '''
         self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + str(self.first_user_token))
         response = self.client.post(reverse('category_create'), self.invalid_data, format='multipart')
 
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_user_category_create(self):
         '''
@@ -162,3 +170,49 @@ class CategoriesTests(APITestCase):
         response = self.client.post(reverse('category_create'), self.data, format='multipart')
 
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_admin_valid_category_edit(self):
+        '''
+            admin can change category data
+        '''
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + str(self.first_user_token))
+        response = self.client.put(reverse('category_edit',
+            kwargs={"pk": self.first_category.id}), self.edit_data, format='multipart')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertNotEqual(self.first_category.name, "Jokes")
+
+    def test_admin_invalid_category_edit(self):
+        '''
+            admin can't change category data
+        '''
+        old_category = self.first_category
+
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + str(self.first_user_token))
+        response = self.client.put(reverse('category_edit',
+            kwargs={"pk": self.first_category.id}), self.edit_invalid_data, format='multipart')
+
+        self.first_category.refresh_from_db()
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(old_category, self.first_category)
+
+    def test_user_category_edit(self):
+        '''
+            user can't change category data
+        '''
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + str(self.second_user_token))
+        response = self.client.put(reverse('category_edit',
+            kwargs={"pk": self.first_category.id}), self.edit_data, format='multipart')
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_unauthorized_category_edit(self):
+        '''
+            unauthorized user can't change category data
+        '''
+        response = self.client.put(reverse('category_edit',
+            kwargs={"pk": self.first_category.id}), self.edit_data, format='multipart')
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
