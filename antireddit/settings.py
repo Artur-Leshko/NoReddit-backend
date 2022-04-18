@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     'categories.apps.CategoriesConfig',
     'posts.apps.PostsConfig',
     'userprofile.apps.UserprofileConfig'
+    'comments.apps.CommentsConfig',
 ]
 
 REST_FRAMEWORK = {
