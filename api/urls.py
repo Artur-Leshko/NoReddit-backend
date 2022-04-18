@@ -16,4 +16,7 @@ urlpatterns = [
 
     # POSTS
     path('posts/', include('api.posts.urls')),
+
+    # CATEGORIES
+    path('categories/', include('api.categories.urls')),
 ]
