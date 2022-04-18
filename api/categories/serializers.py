@@ -26,3 +26,16 @@ class CategoryDetailSerializer(serializers.ModelSerializer):
         model = Category
         fields = ['id', 'name', 'description', 'category_image', 'posts_count']
         read_only_fields = ['id', 'name', 'description', 'category_image', 'posts_count']
+
+class CategoryCreateSerializer(serializers.ModelSerializer):
+    '''
+        Serializer for category while post creation
+    '''
+
+    class Meta:
+        '''
+            Meta class for CategoryDetailSerializer
+        '''
+        model = Category
+        fields = ['id', 'name', 'description', 'category_image']
+        read_only_fields = ['id', 'name', 'description', 'category_image']
