@@ -106,7 +106,7 @@ class PostsAndVotesTests(APITestCase):
         '''
         self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + str(self.second_user_token))
         response = self.client.post(reverse('posts_create'), {'title': 'Third user post',
-            'main_text': 'asdasdasd'})
+            'main_text': 'asdasdasd', 'categories': []})
 
         serializer = CreatePostSerializer(Post.objects.get(title='Third user post'))
 
@@ -138,7 +138,7 @@ class PostsAndVotesTests(APITestCase):
             unauthorized user can't create new post
         '''
         response = self.client.post(reverse('posts_create'), {'title': 'ad',
-            'main_text': 'asdsad'})
+            'main_text': 'asdsad', 'categories': []})
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
 
