@@ -4,7 +4,7 @@ from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 
 from api.userprofile.serializers import UserProfilePostSerializer
-from api.categories.serializers import CategorySerializer
+from api.categories.serializers import CategoryCreateSerializer
 from api.exeptions import CustomApiException
 from posts.models import Post
 from categories.models import Category
@@ -16,7 +16,7 @@ class PostSerializer(serializers.ModelSerializer):
     '''
 
     owner = UserProfilePostSerializer()
-    categories = serializers.ListSerializer(child=CategorySerializer())
+    categories = serializers.ListSerializer(child=CategoryCreateSerializer())
 
     class Meta:
         '''
@@ -28,7 +28,6 @@ class PostSerializer(serializers.ModelSerializer):
 
     @transaction.atomic
     def update(self, instance, validated_data):
-        categories = []
         if 'categories' in validated_data:
             validated_data.pop('categories')
         categories = self.initial_data.get('categories')
@@ -39,15 +38,16 @@ class PostSerializer(serializers.ModelSerializer):
                 instance.main_text = validated_data.get('main_text', instance.main_text)
                 instance.save()
 
-                for category in categories:
-                    db_category = get_object_or_404(Category, id=category.get('id'))
+                if categories:
+                    for category in categories:
+                        db_category = get_object_or_404(Category, id=category.get('id'))
 
-                    if category.get('action') == 'add':
-                        instance.category_set.add(Category.objects.get(id=db_category.id))
-                    elif category.get('action') == 'delete':
-                        instance.category_set.remove(Category.objects.get(id=db_category.id))
-                    else:
-                        raise IntegrityError
+                        if category.get('action') == 'add':
+                            instance.category_set.add(db_category)
+                        elif category.get('action') == 'delete':
+                            instance.category_set.remove(db_category)
+                        else:
+                            raise IntegrityError
         except IntegrityError:
             raise CustomApiException(404, "Category action either unkown or not provided!")
         except (Category.DoesNotExist, ValidationError):
@@ -60,7 +60,7 @@ class CreatePostSerializer(serializers.ModelSerializer):
         Serializer for creating Post model
     '''
 
-    categories = serializers.ListSerializer(child=CategorySerializer())
+    categories = serializers.ListSerializer(child=CategoryCreateSerializer())
 
     class Meta:
         '''
@@ -71,17 +71,18 @@ class CreatePostSerializer(serializers.ModelSerializer):
 
     @transaction.atomic
     def create(self, validated_data):
-        validated_data.pop('categories')
+        if 'categories' in validated_data:
+            validated_data.pop('categories')
+        categories = self.initial_data.get('categories')
 
         try:
             with transaction.atomic():
-
                 instance = Post.objects.create(**validated_data)
                 instance.save()
 
-                for index, value in enumerate(self.initial_data.get('categories')):
+                for index, value in enumerate(categories):
                     category = get_object_or_404(Category, id=value.get('id'))
-                    instance.category_set.add(Category.objects.get(id=category.id))
+                    instance.category_set.add(category)
         except (IntegrityError, Category.DoesNotExist, ValidationError):
             raise CustomApiException(404, "Category does not exist!")
 
