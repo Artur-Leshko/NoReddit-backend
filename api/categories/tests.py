@@ -1,7 +1,10 @@
 import mock
+from io import BytesIO
+from PIL import Image
+from django.core.files import File
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.contrib.auth import get_user_model
 from django.urls import reverse
-from django.core.files import File
 from rest_framework import status
 from rest_framework.test import APITestCase
 from rest_framework_simplejwt.tokens import AccessToken
@@ -41,14 +44,38 @@ class CategoriesTests(APITestCase):
         self.second_user_token = AccessToken.for_user(self.second_user)
 
 
-        file_mock = mock.MagicMock(spec=File)
-        file_mock.name = 'photo.jpg'
+        self.file_mock = mock.MagicMock(spec=File)
+        self.file_mock.name = 'photo.jpg'
 
         self.first_category = Category.objects.create(name="Fun",
-            description="Some funny jokes here", category_image=file_mock.name)
+            description="Some funny jokes here", category_image=self.file_mock.name)
         self.second_category = Category.objects.create(name="Tech",
-            description="Something about technologies", category_image=file_mock.name)
+            description="Something about technologies", category_image=self.file_mock.name)
 
+
+        file_image = self.get_image_file()
+
+        self.data = {
+            'name': '123',
+            'description': 'adsasdasdasdasd',
+            'category_image': file_image
+        }
+
+        self.invalid_data = {
+            'description': 'adsasdasdasdasd',
+            'category_image': file_image
+        }
+
+    @staticmethod
+    def get_image_file(name='test.png', ext='png', size=(50, 50), color=(256, 0, 0)):
+        '''
+            creates image object
+        '''
+        image = BytesIO()
+        Image.new("RGB", size=size, color=color).save(image, ext)
+        image.seek(0)
+
+        return SimpleUploadedFile(name, image.getvalue())
 
     def test_authorized_category_list(self):
         '''
@@ -81,7 +108,7 @@ class CategoriesTests(APITestCase):
             kwargs={"pk": self.first_category.id}
         ))
 
-        serializer = CategorySerializer(self.first_category)
+        serializer = CategoryDetailSerializer(self.first_category)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.json().get('id'), serializer.data.get('id'))
@@ -97,3 +124,41 @@ class CategoriesTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
 
+    def test_admin_valid_category_create(self):
+        '''
+            admin can create new categories with valid data
+        '''
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + str(self.first_user_token))
+        response = self.client.post(reverse('category_create'), self.data, format='multipart')
+
+        serializer = CategorySerializer(Category.objects.get(name='123'))
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.json().get('id'), serializer.data.get('id'))
+
+
+    def test_admin_invalid_category_create(self):
+        '''
+            admin can't create new categories with nvalid data
+        '''
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + str(self.first_user_token))
+        response = self.client.post(reverse('category_create'), self.invalid_data, format='multipart')
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_user_category_create(self):
+        '''
+            user can't create new categories
+        '''
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + str(self.second_user_token))
+        response = self.client.post(reverse('category_create'), self.data, format='multipart')
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_unauthorized_category_create(self):
+        '''
+            unauthorized user can't create new categories
+        '''
+        response = self.client.post(reverse('category_create'), self.data, format='multipart')
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
