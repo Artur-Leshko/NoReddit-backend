@@ -216,3 +216,40 @@ class CategoriesTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
+    def test_admin_category_delete(self):
+        '''
+            admin can delete category
+        '''
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + str(self.first_user_token))
+        response = self.client.delete(reverse('category_delete',
+            kwargs={"pk": self.first_category.id}))
+
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+        try:
+            self.first_category.refresh_from_db()
+        except Category.DoesNotExist:
+            self.assertRaises(Category.DoesNotExist)
+
+    def test_user_category_delete(self):
+        '''
+            user can't delete category
+        '''
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + str(self.second_user_token))
+        response = self.client.delete(reverse('category_delete',
+            kwargs={"pk": self.first_category.id}))
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertIsNotNone(self.first_category)
+
+    def test_unauthorized_category_delete(self):
+        '''
+            unauthorized user can't delete category
+        '''
+        response = self.client.delete(reverse('category_delete',
+            kwargs={"pk": self.first_category.id}))
+
+        self.first_category.refresh_from_db()
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertIsNotNone(self.first_category)
