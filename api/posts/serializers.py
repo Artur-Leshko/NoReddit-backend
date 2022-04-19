@@ -3,7 +3,7 @@ from django.forms import ValidationError
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 
-from api.userprofile.serializers import UserProfilePostSerializer
+from api.userprofile.serializers import UserProfileReadSerializer
 from api.categories.serializers import CategoryCreateSerializer
 from api.exeptions import CustomApiException
 from posts.models import Post
@@ -15,7 +15,7 @@ class PostSerializer(serializers.ModelSerializer):
         Serializer for Post model
     '''
 
-    owner = UserProfilePostSerializer()
+    owner = UserProfileReadSerializer()
     categories = serializers.ListSerializer(child=CategoryCreateSerializer())
 
     class Meta:
@@ -87,3 +87,16 @@ class CreatePostSerializer(serializers.ModelSerializer):
             raise CustomApiException(404, "Category does not exist!")
 
         return instance
+
+class PostCommentSerializer(serializers.ModelSerializer):
+    '''
+        serialzer for post in CommentSerializer
+    '''
+
+    class Meta:
+        '''
+            Meta class for PostCommentSerializer
+        '''
+        model = Post
+        fields = ['id', 'post_owner', 'title']
+        read_only_fields = ['id', 'post_owner', 'title']

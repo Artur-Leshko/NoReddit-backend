@@ -49,6 +49,13 @@ class Post(models.Model):
         '''
         return self.category_set.all()
 
+    @property
+    def post_owner(self):
+        '''
+            returns post owner username
+        '''
+        return str(self.owner.username)
+
 
 class Vote(models.Model):
     '''
