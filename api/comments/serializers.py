@@ -13,7 +13,7 @@ class CommentSerializer(serializers.ModelSerializer):
         serializer for Comment model
     '''
 
-    comment_owner = UserProfileReadSerializer(many=False)
+    owner = UserProfileReadSerializer(many=False)
     post = PostCommentSerializer(many=False)
 
     class Meta:
@@ -21,8 +21,8 @@ class CommentSerializer(serializers.ModelSerializer):
             Meta class for CommentSerializer
         '''
         model = Comment
-        fields = ['id', 'text', 'comment_owner', 'post', 'created_at', 'updated_at']
-        read_only_fields = ['id', 'comment_owner', 'post', 'craeted_at', 'updated_at']
+        fields = ['id', 'text', 'owner', 'post', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'owner', 'post', 'craeted_at', 'updated_at']
 
 class CommentCreateSerializer(serializers.ModelSerializer):
     '''
