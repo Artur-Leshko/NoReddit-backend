@@ -19,4 +19,7 @@ urlpatterns = [
 
     # CATEGORIES
     path('categories/', include('api.categories.urls')),
+
+    # COMMENTS
+    path('', include('api.comments.urls')),
 ]
