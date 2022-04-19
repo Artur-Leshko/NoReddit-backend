@@ -51,7 +51,7 @@ INSTALLED_APPS = [
     'api.apps.ApiConfig',
     'categories.apps.CategoriesConfig',
     'posts.apps.PostsConfig',
-    'userprofile.apps.UserprofileConfig'
+    'userprofile.apps.UserprofileConfig',
     'comments.apps.CommentsConfig',
 ]
 

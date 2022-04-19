@@ -1,4 +1,3 @@
-from rest_framework import permissions
 from rest_framework.permissions import BasePermission
 
 class IsPostOwner(BasePermission):
@@ -17,3 +16,13 @@ class IsCommentOwner(BasePermission):
 
     def has_object_permission(self, request, view, obj):
         return obj.owner.id == request.user.id
+
+class IsCommentOwnerOrPostOwner(BasePermission):
+    '''
+        Owner of the comment
+    '''
+    def has_permission(self, request, view):
+        return request.user and request.user.is_authenticated
+
+    def has_object_permission(self, request, view, obj):
+        return obj.owner.id == request.user.id or obj.post.owner.id == request.user.id
