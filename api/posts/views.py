@@ -32,6 +32,14 @@ class PostPagination(PageNumberPagination):
     page_size_query_param = 'page_size'
     max_page_size = 1000
 
+class CommentPagination(PageNumberPagination):
+    '''
+        Number of comments for pagination
+    '''
+    page_size = 15
+    page_size_query_param = 'page_size'
+    max_page_size = 10000
+
 class PopularPostsList(generics.ListAPIView):
     '''
         Posts list for main page
@@ -198,6 +206,7 @@ class PostCommentsList(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticated]
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer
+    pagination_class = CommentPagination
 
     def get_queryset(self):
         comments = Comment.objects.filter(post=self.kwargs.get('pk'))
