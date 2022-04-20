@@ -185,3 +185,9 @@ class UpdatePostView(generics.UpdateAPIView):
             return self.partial_update(request, *args, **kwargs)
         except serializers.ValidationError:
             raise CustomApiException(400, "Bad request!")
+
+
+class PostCommentsList(generics.ListAPIView):
+    '''
+        returns list of post comments
+    '''
