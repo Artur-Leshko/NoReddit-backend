@@ -59,24 +59,24 @@ class CommentView(CreateRetrieveUpdateDestroyViewset):
         comment_vote_values = comment_vote.values()
 
         if not comment_vote:
-            new_comment_vote = CommentVote.objects.create(owner=UserProfile.objects.get(pk=self.request.user.id,
-                comment=Comment.objects.get(pk=comment_id), vote_type='up'))
+            new_comment_vote = CommentVote.objects.create(owner=UserProfile.objects.get(pk=self.request.user.id),
+                comment=Comment.objects.get(pk=comment_id), vote_type='up')
             new_comment_vote.save()
 
-            serializer = CommentSerializer(self.get_object(comment_id))
+            serializer = CommentSerializer(self.get_object())
 
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         elif comment_vote_values[0]['vote_type'] == 'down':
             comment_vote[0].vote_type = 'up'
             comment_vote[0].save()
 
-            serializer = CommentSerializer(self.get_object(comment_id))
+            serializer = CommentSerializer(self.get_object())
 
             return Response(serializer.data, status=status.HTTP_205_RESET_CONTENT)
         else:
             comment_vote.delete()
 
-            serializer = CommentSerializer(self.get_object(comment_id))
+            serializer = CommentSerializer(self.get_object())
 
             return Response(serializer.data, status=status.HTTP_205_RESET_CONTENT)
 
@@ -94,19 +94,19 @@ class CommentView(CreateRetrieveUpdateDestroyViewset):
                 comment=Comment.objects.get(pk=comment_id), vote_type='down')
             new_comment_vote.save()
 
-            serializer = CommentSerializer(self.get_object(comment_id))
+            serializer = CommentSerializer(self.get_object())
 
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         elif comment_vote_values[0]['vote_type'] == 'up':
             comment_vote[0].vote_type = 'down'
             comment_vote[0].save()
 
-            serializer = CommentSerializer(self.get_object(comment_id))
+            serializer = CommentSerializer(self.get_object())
 
             return Response(serializer.data, status=status.HTTP_205_RESET_CONTENT)
         else:
             comment_vote.delete()
 
-            serializer = CommentSerializer(self.get_object(comment_id))
+            serializer = CommentSerializer(self.get_object())
 
             return Response(serializer.data, status=status.HTTP_205_RESET_CONTENT)
