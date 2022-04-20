@@ -21,8 +21,8 @@ class CommentSerializer(serializers.ModelSerializer):
             Meta class for CommentSerializer
         '''
         model = Comment
-        fields = ['id', 'text', 'owner', 'post', 'created_at', 'updated_at']
-        read_only_fields = ['id', 'owner', 'post', 'craeted_at', 'updated_at']
+        fields = ['id', 'text', 'owner', 'post', 'upvotes', 'downvotes', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'owner', 'post', 'upvotes', 'downvotes', 'craeted_at', 'updated_at']
 
 class CommentCreateSerializer(serializers.ModelSerializer):
     '''
@@ -37,7 +37,7 @@ class CommentCreateSerializer(serializers.ModelSerializer):
             Meat class for CommentCreateSerializer
         '''
         model = Comment
-        fields = ['id', 'text', 'post', 'owner', 'post_id', 'created_at', 'updated_at']
+        fields = ['id', 'text', 'post', 'owner', 'upvotes', 'downvotes', 'post_id', 'created_at', 'updated_at']
 
     def create(self, validated_data):
         try:
