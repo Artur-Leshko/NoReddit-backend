@@ -27,6 +27,20 @@ class Comment(models.Model):
     def __str__(self):
         return str(self.text)
 
+    @property
+    def upvotes(self):
+        '''
+            returns count of upvotes for comment
+        '''
+        return CommentVote.objects.filter(comment=self.id, vote_type='up').count()
+
+    @property
+    def downvotes(self):
+        '''
+            returns count of downvotes for comment
+        '''
+        return CommentVote.objects.filter(comment=self.id, vote_type='down').count()
+
 class CommentVote(models.Model):
     '''
         Model for Comment Vote
