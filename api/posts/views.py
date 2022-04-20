@@ -4,10 +4,14 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
 
+from django.db.models import Count
+
 from api.exeptions import CustomApiException
 from api.permissions import IsPostOwner
 from userprofile.models import UserProfile
 from posts.models import Post, Vote
+from comments.models import Comment
+from api.comments.serializers import CommentSerializer
 from .serializers import PostSerializer, CreatePostSerializer
 
 QUERY_STRING_FOR_POPULAR_POSTS = '''
@@ -191,3 +195,11 @@ class PostCommentsList(generics.ListAPIView):
     '''
         returns list of post comments
     '''
+    permission_classes = [permissions.IsAuthenticated]
+    queryset = Comment.objects.all()
+    serializer_class = CommentSerializer
+
+    def get_queryset(self):
+        comments = Comment.objects.filter(post=self.kwargs.get('pk'))
+
+        return comments.annotate(Count('commentvote')).order_by('-commentvote')
