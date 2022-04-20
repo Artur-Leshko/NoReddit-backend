@@ -26,3 +26,31 @@ class Comment(models.Model):
 
     def __str__(self):
         return str(self.text)
+
+class CommentVote(models.Model):
+    '''
+        Model for Comment Vote
+    '''
+
+    UPVOTE = 'up'
+    DOWNVOTE = 'down'
+
+    VOTE_TYPE = [
+        (UPVOTE, 'upvoted'),
+        (DOWNVOTE, 'downvoted')
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    owner = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
+    comment = models.ForeignKey(Comment, on_delete=models.CASCADE)
+    vote_type = models.CharField(max_length=4, choices=VOTE_TYPE, default=UPVOTE)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        '''
+            Meta class for CommentVote model
+        '''
+        verbose_name = 'Comment vote'
+        verbose_name_plural = 'Comment votes'
+        ordering = ['-created_at']
