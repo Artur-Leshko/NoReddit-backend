@@ -79,3 +79,34 @@ class CommentView(CreateRetrieveUpdateDestroyViewset):
             serializer = CommentSerializer(self.get_object(comment_id))
 
             return Response(serializer.data, status=status.HTTP_205_RESET_CONTENT)
+
+    @action(methods=['put'], detail=True, url_path='downvote')
+    def downvote(self, *args, **kwargs):
+        '''
+            downvoting comment
+        '''
+        comment_id = kwargs.get('pk')
+        comment_vote = CommentVote.objects.filter(owner=self.request.user.id, comment=comment_id)
+        comment_vote_values = comment_vote.values()
+
+        if not comment_vote:
+            new_comment_vote = CommentVote.objects.create(owner=UserProfile.objects.get(pk=self.request.user.id),
+                comment=Comment.objects.get(pk=comment_id), vote_type='down')
+            new_comment_vote.save()
+
+            serializer = CommentSerializer(self.get_object(comment_id))
+
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        elif comment_vote_values[0]['vote_type'] == 'up':
+            comment_vote[0].vote_type = 'down'
+            comment_vote[0].save()
+
+            serializer = CommentSerializer(self.get_object(comment_id))
+
+            return Response(serializer.data, status=status.HTTP_205_RESET_CONTENT)
+        else:
+            comment_vote.delete()
+
+            serializer = CommentSerializer(self.get_object(comment_id))
+
+            return Response(serializer.data, status=status.HTTP_205_RESET_CONTENT)
