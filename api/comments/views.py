@@ -49,7 +49,7 @@ class CommentView(CreateRetrieveUpdateDestroyViewset):
         '''
         serializer.save(owner=UserProfile.objects.get(pk=self.request.user.id))
 
-    @action(methods=['put'], detail=True, url_path='upvote')
+    @action(methods=['put'], detail=True, url_path='upvote', permission_classes=[permissions.IsAuthenticated])
     def upvote(self, *args, **kwargs):
         '''
             upvoting comment
@@ -80,7 +80,7 @@ class CommentView(CreateRetrieveUpdateDestroyViewset):
 
             return Response(serializer.data, status=status.HTTP_205_RESET_CONTENT)
 
-    @action(methods=['put'], detail=True, url_path='downvote')
+    @action(methods=['put'], detail=True, url_path='downvote', permission_classes=[permissions.IsAuthenticated])
     def downvote(self, *args, **kwargs):
         '''
             downvoting comment
