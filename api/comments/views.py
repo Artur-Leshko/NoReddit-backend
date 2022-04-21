@@ -29,8 +29,7 @@ class CommentView(CreateRetrieveUpdateDestroyViewset):
         self.serializer_class = CommentCreateSerializer
         try:
             return super().create(request, *args, **kwargs)
-        except serializers.ValidationError as exc:
-            print(exc.detail)
+        except serializers.ValidationError:
             raise CustomApiException(400, "Bad request!")
 
     def update(self, request, *args, **kwargs):

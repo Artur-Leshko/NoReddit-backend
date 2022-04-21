@@ -78,6 +78,19 @@ class CommentsAndCommentVotesTests(APITestCase):
             comment=self.second_user_post_comment, vote_type='down')
         self.third_user_second_comment_vote.save()
 
+        self.creation_data = {
+            "text": 'meme',
+            "post_id": self.first_user_post.id
+        }
+
+        self.update_data = {
+            "text": 'new text'
+        }
+
+        self.invalid_data = {
+            "text": ''
+        }
+
     def test_authorized_comment_details(self):
         '''
             any authorized user can get comment details
@@ -110,3 +123,39 @@ class CommentsAndCommentVotesTests(APITestCase):
             kwargs={"pk": self.first_user_post_comment.id}))
 
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_authorized_valid_comment_craete(self):
+        '''
+            authorized user can create new comments for post with valid data
+        '''
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + str(self.third_user_token))
+        response = self.client.post(reverse('comment-list'), self.creation_data)
+
+        serializer = CommentCreateSerializer(Comment.objects.get(text=self.creation_data.get('text')))
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.json(), serializer.data)
+
+    def test_authorized_invalid_comment_craete(self):
+        '''
+            authorized user can't create new comments for post with invalid data
+        '''
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + str(self.third_user_token))
+        response = self.client.post(reverse('comment-list'), self.invalid_data)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        try:
+            Comment.objects.get(text=self.invalid_data.get(''))
+        except Comment.DoesNotExist:
+            self.assertRaises(Comment.DoesNotExist)
+
+    def test_unauthorized_comment_create(self):
+        '''
+            unauthorized user can't create new comments for post
+        '''
+        response = self.client.post(reverse('comment-list'), self.creation_data)
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
