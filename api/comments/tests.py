@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.urls import reverse
+from django.db import IntegrityError
 from rest_framework import status
 from rest_framework.test import APITestCase
 from rest_framework_simplejwt.tokens import AccessToken
@@ -210,9 +211,62 @@ class CommentsAndCommentVotesTests(APITestCase):
 
     def test_unauthorized_comment_update(self):
         '''
-            unauthorized user can't update comment of another user
+            unauthorized user can't update comment
         '''
         response = self.client.put(reverse('comment-detail',
             kwargs={"pk": self.first_user_post_comment.id}), self.update_data)
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_owner_comment_delete(self):
+        '''
+            comment owner can delete his comment
+        '''
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + str(self.second_user_token))
+        response = self.client.delete(reverse('comment-detail',
+            kwargs={"pk": self.second_user_post_comment.id}))
+
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+        try:
+            Comment.objects.get(text="LOL")
+        except Comment.DoesNotExist:
+            self.assertRaises(Comment.DoesNotExist)
+
+    def test_postowner_comment_delete(self):
+        '''
+            post owner can delete comment of another user
+        '''
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + str(self.first_user_token))
+        response = self.client.delete(reverse('comment-detail',
+            kwargs={"pk": self.second_user_post_comment.id}))
+
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        try:
+            Comment.objects.get(text="LOL")
+        except Comment.DoesNotExist:
+            self.assertRaises(Comment.DoesNotExist)
+
+    def test_user_comment_delete(self):
+        '''
+            user can't delete comment of another user
+        '''
+        old_second_user_post_comment = self.second_user_post_comment
+
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + str(self.third_user_token))
+        response = self.client.delete(reverse('comment-detail',
+            kwargs={"pk": self.second_user_post_comment.id}))
+
+        self.second_user_post_comment.refresh_from_db()
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(old_second_user_post_comment, self.second_user_post_comment)
+
+    def test_unauthorized_comment_delete(self):
+        '''
+            unauthorized user can't delete comment
+        '''
+        response = self.client.delete(reverse('comment-detail',
+            kwargs={"pk": self.first_user_post_comment.id}))
 
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
