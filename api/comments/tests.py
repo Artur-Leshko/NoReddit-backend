@@ -159,3 +159,60 @@ class CommentsAndCommentVotesTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
 
+    def test_owner_valid_comment_update(self):
+        '''
+            comment owner can update comment with valid data
+        '''
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + str(self.second_user_token))
+        response = self.client.put(reverse('comment-detail',
+            kwargs={"pk": self.second_user_post_comment.id}), self.update_data)
+
+        self.second_user_post_comment.refresh_from_db()
+        serializer = CommentSerializer(self.second_user_post_comment)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.json(), serializer.data)
+
+    def test_owner_invalid_comment_update(self):
+        '''
+            comment owner can't update comment with invalid data
+        '''
+        old_second_user_post_comment = self.second_user_post_comment
+
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + str(self.second_user_token))
+        response = self.client.put(reverse('comment-detail',
+            kwargs={"pk": self.second_user_post_comment.id}), self.invalid_data)
+
+        self.second_user_post_comment.refresh_from_db()
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(self.second_user_post_comment, old_second_user_post_comment)
+
+    def test_postowner_user_comment_update(self):
+        '''
+            post owner and user can't update comment of another user
+        '''
+        old_second_user_post_comment = self.second_user_post_comment
+
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + str(self.first_user_token))
+        first_reponse = self.client.put(reverse('comment-detail',
+            kwargs={"pk": self.second_user_post_comment.id}), self.update_data)
+
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + str(self.third_user_token))
+        second_reponse = self.client.put(reverse('comment-detail',
+            kwargs={"pk": self.second_user_post_comment.id}), self.update_data)
+
+        self.second_user_post_comment.refresh_from_db()
+
+        self.assertEqual(first_reponse.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(second_reponse.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(self.second_user_post_comment, old_second_user_post_comment)
+
+    def test_unauthorized_comment_update(self):
+        '''
+            unauthorized user can't update comment of another user
+        '''
+        response = self.client.put(reverse('comment-detail',
+            kwargs={"pk": self.first_user_post_comment.id}), self.update_data)
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
