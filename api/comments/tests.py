@@ -69,16 +69,6 @@ class CommentsAndCommentVotesTests(APITestCase):
             comment=self.first_user_post_comment, vote_type='up')
         self.third_user_first_comment_vote.save()
 
-        self.first_user_second_comment_vote = CommentVote.objects.create(owner=self.first_userprofile,
-            comment=self.second_user_post_comment, vote_type='up')
-        self.first_user_second_comment_vote.save()
-        self.second_user_second_comment_vote = CommentVote.objects.create(owner=self.second_userprofile,
-            comment=self.second_user_post_comment, vote_type='up')
-        self.second_user_second_comment_vote.save()
-        self.third_user_second_comment_vote = CommentVote.objects.create(owner=self.third_userprofile,
-            comment=self.second_user_post_comment, vote_type='down')
-        self.third_user_second_comment_vote.save()
-
         self.creation_data = {
             "text": 'meme',
             "post_id": self.first_user_post.id
@@ -270,3 +260,94 @@ class CommentsAndCommentVotesTests(APITestCase):
             kwargs={"pk": self.first_user_post_comment.id}))
 
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_authorized_upvote_comment(self):
+        '''
+            authorized user can upvote any comment
+        '''
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + str(self.third_user_token))
+        first_response = self.client.put(reverse('comment-upvote',
+            kwargs={"pk": self.second_user_post_comment.id}))
+
+        self.second_user_post_comment.refresh_from_db()
+        first_serializer = CommentSerializer(self.second_user_post_comment)
+
+        self.assertEqual(first_response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(first_response.json(), first_serializer.data)
+        self.assertEqual(first_response.json().get('upvotes'), 1)
+        self.assertEqual(first_response.json().get('downvotes'), 0)
+
+        second_response = self.client.put(reverse('comment-upvote',
+            kwargs={"pk": self.second_user_post_comment.id}))
+
+        self.second_user_post_comment.refresh_from_db()
+        second_serializer = CommentSerializer(self.second_user_post_comment)
+
+        self.assertEqual(second_response.status_code, status.HTTP_205_RESET_CONTENT)
+        self.assertEqual(second_response.json(), second_serializer.data)
+        self.assertEqual(second_response.json().get('upvotes'), 0)
+        self.assertEqual(second_response.json().get('downvotes'), 0)
+
+        self.client.put(reverse('comment-downvote', kwargs={"pk": self.second_user_post_comment.id}))
+        third_response = self.client.put(reverse('comment-upvote',
+            kwargs={"pk": self.second_user_post_comment.id}))
+
+        self.second_user_post_comment.refresh_from_db()
+        third_serializer = CommentSerializer(self.second_user_post_comment)
+
+        self.assertEqual(third_response.status_code, status.HTTP_205_RESET_CONTENT)
+        self.assertEqual(third_response.json(), third_serializer.data)
+        self.assertEqual(third_response.json().get('upvotes'), 1)
+        self.assertEqual(third_response.json().get('downvotes'), 0)
+
+    def test_authorized_downvote_comment(self):
+        '''
+            authorized user can downvote any comment
+        '''
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + str(self.third_user_token))
+        first_response = self.client.put(reverse('comment-downvote',
+            kwargs={"pk": self.second_user_post_comment.id}))
+
+        self.second_user_post_comment.refresh_from_db()
+        first_serializer = CommentSerializer(self.second_user_post_comment)
+
+        self.assertEqual(first_response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(first_response.json(), first_serializer.data)
+        self.assertEqual(first_response.json().get('upvotes'), 0)
+        self.assertEqual(first_response.json().get('downvotes'), 1)
+
+        second_response = self.client.put(reverse('comment-downvote',
+            kwargs={"pk": self.second_user_post_comment.id}))
+
+        self.second_user_post_comment.refresh_from_db()
+        second_serializer = CommentSerializer(self.second_user_post_comment)
+
+        self.assertEqual(second_response.status_code, status.HTTP_205_RESET_CONTENT)
+        self.assertEqual(second_response.json(), second_serializer.data)
+        self.assertEqual(second_response.json().get('upvotes'), 0)
+        self.assertEqual(second_response.json().get('downvotes'), 0)
+
+        self.client.put(reverse('comment-upvote', kwargs={"pk": self.second_user_post_comment.id}))
+        third_response = self.client.put(reverse('comment-downvote',
+            kwargs={"pk": self.second_user_post_comment.id}))
+
+        self.second_user_post_comment.refresh_from_db()
+        third_serializer = CommentSerializer(self.second_user_post_comment)
+
+        self.assertEqual(third_response.status_code, status.HTTP_205_RESET_CONTENT)
+        self.assertEqual(third_response.json(), third_serializer.data)
+        self.assertEqual(third_response.json().get('upvotes'), 0)
+        self.assertEqual(third_response.json().get('downvotes'), 1)
+
+
+    def test_unauthorized_upvote_downvote_comment(self):
+        '''
+            unauthorized user can't upvote/downvote any comment
+        '''
+        first_response = self.client.put(reverse('comment-upvote',
+            kwargs={"pk": self.first_user_post_comment.id}))
+        second_resposne = self.client.put(reverse('comment-downvote',
+            kwargs={"pk": self.first_user_post_comment.id}))
+
+        self.assertEqual(first_response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(second_resposne.status_code, status.HTTP_401_UNAUTHORIZED)
