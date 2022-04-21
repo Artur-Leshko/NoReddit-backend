@@ -6,6 +6,8 @@ from rest_framework_simplejwt.tokens import AccessToken
 
 from userprofile.models import UserProfile
 from posts.models import Post, Vote
+from comments.models import Comment
+from api.comments.serializers import CommentSerializer
 from .serializers import PostSerializer, CreatePostSerializer
 
 User = get_user_model()
@@ -76,6 +78,13 @@ class PostsAndVotesTests(APITestCase):
         self.third_user_second_post_vote = Vote.objects.create(owner=self.third_userprofile,
             post=self.second_user_post, vote_type='down')
         self.third_user_second_post_vote.save()
+
+        self.first_user_post_comment = Comment.objects.create(owner=self.firt_userprofile,
+            post=self.first_user_post, text="XD")
+        self.first_user_post_comment = Comment.objects.create(owner=self.second_userprofile,
+            post=self.first_user_post, text="LOL")
+        self.first_user_post_comment = Comment.objects.create(owner=self.third_userprofile,
+            post=self.first_user_post, text="ROFL")
 
 
     def test_authorized_popular_post(self):
