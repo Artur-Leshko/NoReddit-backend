@@ -4,10 +4,14 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
 
+from django.db.models import Count
+
 from api.exeptions import CustomApiException
 from api.permissions import IsPostOwner
 from userprofile.models import UserProfile
 from posts.models import Post, Vote
+from comments.models import Comment
+from api.comments.serializers import CommentSerializer
 from .serializers import PostSerializer, CreatePostSerializer
 
 QUERY_STRING_FOR_POPULAR_POSTS = '''
@@ -27,6 +31,14 @@ class PostPagination(PageNumberPagination):
     page_size = 10
     page_size_query_param = 'page_size'
     max_page_size = 1000
+
+class CommentPagination(PageNumberPagination):
+    '''
+        Number of comments for pagination
+    '''
+    page_size = 15
+    page_size_query_param = 'page_size'
+    max_page_size = 10000
 
 class PopularPostsList(generics.ListAPIView):
     '''
@@ -185,3 +197,18 @@ class UpdatePostView(generics.UpdateAPIView):
             return self.partial_update(request, *args, **kwargs)
         except serializers.ValidationError:
             raise CustomApiException(400, "Bad request!")
+
+
+class PostCommentsList(generics.ListAPIView):
+    '''
+        returns list of post comments
+    '''
+    permission_classes = [permissions.IsAuthenticated]
+    queryset = Comment.objects.all()
+    serializer_class = CommentSerializer
+    pagination_class = CommentPagination
+
+    def get_queryset(self):
+        comments = Comment.objects.filter(post=self.kwargs.get('pk'))
+
+        return comments.annotate(Count('commentvote')).order_by('-commentvote')
