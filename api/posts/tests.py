@@ -6,7 +6,7 @@ from rest_framework_simplejwt.tokens import AccessToken
 
 from userprofile.models import UserProfile
 from posts.models import Post, Vote
-from comments.models import Comment
+from comments.models import Comment, CommentVote
 from api.comments.serializers import CommentSerializer
 from .serializers import PostSerializer, CreatePostSerializer
 
@@ -81,10 +81,13 @@ class PostsAndVotesTests(APITestCase):
 
         self.first_user_post_comment = Comment.objects.create(owner=self.firt_userprofile,
             post=self.first_user_post, text="XD")
-        self.first_user_post_comment = Comment.objects.create(owner=self.second_userprofile,
+        self.second_user_post_comment = Comment.objects.create(owner=self.second_userprofile,
             post=self.first_user_post, text="LOL")
-        self.first_user_post_comment = Comment.objects.create(owner=self.third_userprofile,
+        self.third_user_post_comment = Comment.objects.create(owner=self.third_userprofile,
             post=self.first_user_post, text="ROFL")
+
+        self.first_comment_vote = CommentVote.objects.create(owner=self.firt_userprofile,
+            comment=self.first_user_post_comment, vote_type='up')
 
 
     def test_authorized_popular_post(self):
@@ -355,3 +358,26 @@ class PostsAndVotesTests(APITestCase):
 
         self.assertEqual(upvote_response.status_code, status.HTTP_401_UNAUTHORIZED)
         self.assertEqual(downvote_reponse.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_authorized_post_comments_list(self):
+        '''
+            authorized user can get list of post comments
+        '''
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + str(self.second_user_token))
+        response = self.client.get(reverse('post_comments',
+            kwargs={"pk": self.first_user_post.id}))
+
+        serializer = CommentSerializer(Comment.objects.get(text='XD'))
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.json().get('results')[0], serializer.data)
+        self.assertEqual(response.json().get('count'), 3)
+
+    def test_unauthorized_post_comments_list(self):
+        '''
+            unauthorized user can't get list of post comments
+        '''
+        response = self.client.get(reverse('post_comments',
+            kwargs={"pk": self.first_user_post.id}))
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
