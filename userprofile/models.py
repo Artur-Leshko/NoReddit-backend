@@ -97,6 +97,7 @@ class UserProfile(models.Model):
     firstname = models.CharField(verbose_name="user firstname", max_length=200, blank=True)
     surname = models.CharField(verbose_name="user surname", max_length=200, blank=True)
     avatar = models.ImageField(upload_to=user_path, blank=True, null=True)
+    followers = models.ManyToManyField("self", symmetrical=False, db_table="userprofile_followers")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -118,4 +119,21 @@ class UserProfile(models.Model):
 
     @property
     def username(self):
+        '''
+            returns userprofile username
+        '''
         return self.user.username
+
+    @property
+    def follower_count(self):
+        '''
+            returns count of followers for user
+        '''
+        return UserProfile.objects.filter(followers__to_userprofile_id=self.id).count()
+
+    @property
+    def followed_coutn(self):
+        '''
+            returns count of followed users for user
+        '''
+        return UserProfile.objects.filter(followers__from_userprofile_id=self.id).count()
