@@ -51,7 +51,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
 class UserProfileReadSerializer(serializers.ModelSerializer):
     '''
-        Serializer class for Userprofile model that user in post urls
+        Serializer class for Userprofile model
     '''
 
     class Meta:
@@ -59,5 +59,7 @@ class UserProfileReadSerializer(serializers.ModelSerializer):
             Meta class for UserProfilePost serializer
         '''
         model = UserProfile
-        fields = ['id', 'username', 'firstname', 'avatar', 'surname']
-        read_only_fields = ['id', 'username', 'firstname', 'avatar', 'surname']
+        fields = ['id', 'username', 'firstname', 'avatar', 'surname', 'followers_count', 'followed_count']
+        read_only_fields = ['id', 'username', 'firstname', 'avatar', 'surname', 'followers_count', 'followed_count']
+
+
