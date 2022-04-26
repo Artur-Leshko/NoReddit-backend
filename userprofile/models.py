@@ -138,6 +138,7 @@ class UserProfile(models.Model):
         '''
         return Followers.objects.filter(follower=self.id).count()
 
+
 class Followers(models.Model):
     '''
         Model for followers
