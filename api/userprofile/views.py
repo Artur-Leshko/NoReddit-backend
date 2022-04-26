@@ -3,7 +3,7 @@ from rest_framework import permissions, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from api.userprofile.serializers import UserProfileSerializer
-from userprofile.models import UserProfile
+from userprofile.models import UserProfile, Followers
 from api.exeptions import CustomApiException
 
 User = get_user_model()
@@ -83,3 +83,72 @@ class UserProfilePublicView(APIView):
         userprofile = self.get_object(pk)
         data = UserProfileSerializer(userprofile).data
         return Response(data, status=status.HTTP_200_OK)
+
+
+class UserProfileSubscribeView(APIView):
+    '''
+        Subscribes user on another user
+    '''
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self, pk):
+        '''
+            returns UserProfile object
+        '''
+
+        try:
+            userprofile = UserProfile.objects.get(pk=pk)
+        except UserProfile.DoesNotExist:
+            raise CustomApiException(404, "User profile does not exist")
+
+        return userprofile
+
+    def post(self, request, pk):
+        '''
+            create new cortege in m2m table, returns obj of UserProfile that followed UserProfile
+        '''
+        userprofile = self.get_object(request.user.id)
+        followed_userprofile = self.get_object(pk)
+
+        if userprofile == followed_userprofile:
+            raise CustomApiException(400, "You can not subscribe on yourself!")
+
+        userprofile.followers.add(followed_userprofile)
+        userprofile.save()
+
+        serializer = UserProfileSerializer(userprofile)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+class UserProfileUnsubscribeView(APIView):
+    '''
+        Unsubscribes user from another user
+    '''
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self, pk):
+        '''
+            returns UserProfile object
+        '''
+
+        try:
+            userprofile = UserProfile.objects.get(pk=pk)
+        except UserProfile.DoesNotExist:
+            raise CustomApiException(404, "User profile does not exist")
+
+        return userprofile
+
+    def post(self, request, pk):
+        '''
+            removes cortege in m2m table
+        '''
+        userprofile = self.get_object(request.user.id)
+        followed_userprofile = self.get_object(pk)
+
+        userprofile.followers.remove(followed_userprofile)
+        userprofile.save()
+
+        serilizer = UserProfileSerializer(userprofile)
+
+        return Response(serilizer.data, status=status.HTTP_200_OK)
