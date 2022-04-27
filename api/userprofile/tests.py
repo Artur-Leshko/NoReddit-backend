@@ -47,6 +47,10 @@ class UserProfileTests(APITestCase):
         self.first_user_token = AccessToken.for_user(self.first_user)
         self.third_user_token = AccessToken.for_user(self.third_user)
 
+        self.first_userprofile.followers.add(self.second_userprofile)
+        self.second_userprofile.followers.add(self.first_userprofile)
+        self.third_userprofile.followers.add(self.first_userprofile)
+
     def test_valid_userprofile(self):
         '''
             tests that userprofile view returns info for logged-in user
