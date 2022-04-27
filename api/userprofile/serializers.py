@@ -62,4 +62,15 @@ class UserProfileReadSerializer(serializers.ModelSerializer):
         fields = ['id', 'username', 'firstname', 'avatar', 'surname', 'followers_count', 'followed_count']
         read_only_fields = ['id', 'username', 'firstname', 'avatar', 'surname', 'followers_count', 'followed_count']
 
+class FollowerSerializer(serializers.ModelSerializer):
+    '''
+        Serializer class for Userprofile followers
+    '''
 
+    class Meta:
+        '''
+            Meat class for Followers serialized
+        '''
+        model = UserProfile
+        fields = ['id', 'username', 'firstname', 'avatar', 'surname']
+        read_only_fields = ['id', 'username', 'firstname', 'avatar', 'surname']
