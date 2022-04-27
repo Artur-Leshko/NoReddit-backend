@@ -1,12 +1,38 @@
 from django.contrib.auth import get_user_model
+from django.shortcuts import get_object_or_404
 from rest_framework import permissions, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from api.userprofile.serializers import UserProfileSerializer
-from userprofile.models import UserProfile, Followers
+from rest_framework.pagination import PageNumberPagination
+
+from api.userprofile.serializers import UserProfileSerializer, FollowerSerializer
+from userprofile.models import UserProfile
 from api.exeptions import CustomApiException
 
 User = get_user_model()
+
+QUERY_STRING_FOR_FOLLOWERS = '''
+    SELECT u.id, u.firstname, u.surname, u.avatar, u.user_id
+        FROM userprofile_userprofile u
+            JOIN userprofile_followers uf ON uf.follower_id = u.id
+                AND uf.followed_id = %s
+'''
+
+QUERY_STRING_FOR_FOLLOWED = '''
+    SELECT u.id, u.firstname, u.surname, u.avatar, u.user_id
+        FROM userprofile_userprofile u
+            JOIN userprofile_followers uf ON uf.followed_id = u.id
+                AND uf.follower_id = %s
+'''
+
+
+class FollowerPagination(PageNumberPagination):
+    '''
+        Pagination class for followers
+    '''
+    page_size = 2
+    page_size_query_param = 'page_size'
+    max_page_size = 1000
 
 class UserProfileView(APIView):
     '''
@@ -92,24 +118,12 @@ class UserProfileSubscribeView(APIView):
 
     permission_classes = [permissions.IsAuthenticated]
 
-    def get_object(self, pk):
-        '''
-            returns UserProfile object
-        '''
-
-        try:
-            userprofile = UserProfile.objects.get(pk=pk)
-        except UserProfile.DoesNotExist:
-            raise CustomApiException(404, "User profile does not exist")
-
-        return userprofile
-
     def post(self, request, pk):
         '''
             create new cortege in m2m table, returns obj of UserProfile that followed UserProfile
         '''
-        userprofile = self.get_object(request.user.id)
-        followed_userprofile = self.get_object(pk)
+        userprofile = get_object_or_404(UserProfile, id=request.user.id)
+        followed_userprofile = get_object_or_404(UserProfile, id=pk)
 
         if userprofile == followed_userprofile:
             raise CustomApiException(400, "You can not subscribe on yourself!")
@@ -127,24 +141,12 @@ class UserProfileUnsubscribeView(APIView):
 
     permission_classes = [permissions.IsAuthenticated]
 
-    def get_object(self, pk):
-        '''
-            returns UserProfile object
-        '''
-
-        try:
-            userprofile = UserProfile.objects.get(pk=pk)
-        except UserProfile.DoesNotExist:
-            raise CustomApiException(404, "User profile does not exist")
-
-        return userprofile
-
     def post(self, request, pk):
         '''
             removes cortege in m2m table
         '''
-        userprofile = self.get_object(request.user.id)
-        followed_userprofile = self.get_object(pk)
+        userprofile = get_object_or_404(UserProfile, id=request.user.id)
+        followed_userprofile = get_object_or_404(UserProfile, id=pk)
 
         userprofile.followers.remove(followed_userprofile)
         userprofile.save()
@@ -152,3 +154,35 @@ class UserProfileUnsubscribeView(APIView):
         serilizer = UserProfileSerializer(userprofile)
 
         return Response(serilizer.data, status=status.HTTP_200_OK)
+
+class FollowerListView(APIView, FollowerPagination):
+    '''
+        return list of followers for user
+    '''
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, pk):
+        '''
+            returns list of followers for user
+        '''
+        users = UserProfile.objects.raw(QUERY_STRING_FOR_FOLLOWERS, [pk])
+        serializer = FollowerSerializer(self.paginate_queryset(users, request, view=self), many=True)
+
+        return self.get_paginated_response(serializer.data)
+
+class FollowedListView(APIView, FollowerPagination):
+    '''
+        return list of followers for user
+    '''
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, pk):
+        '''
+            returns list of followers for user
+        '''
+        users = UserProfile.objects.raw(QUERY_STRING_FOR_FOLLOWED, [pk])
+        serializer = FollowerSerializer(self.paginate_queryset(users, request, view=self), many=True)
+
+        return self.get_paginated_response(serializer.data)
