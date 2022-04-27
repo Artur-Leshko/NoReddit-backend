@@ -1,3 +1,4 @@
+from re import S
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from rest_framework import status
@@ -5,7 +6,7 @@ from rest_framework.test import APITestCase
 from rest_framework_simplejwt.tokens import AccessToken
 
 from userprofile.models import UserProfile
-from .serializers import UserProfileSerializer
+from .serializers import UserProfileSerializer, FollowerSerializer
 from api.exeptions import CustomApiException
 
 User = get_user_model()
@@ -162,3 +163,47 @@ class UserProfileTests(APITestCase):
         with self.assertRaises(CustomApiException):
             self.client.post(reverse('user_registration'), {'username': 'my user',
                 'email': 'abcdf@mail.ru', 'password': 'qwe123'})
+
+    def test_authorized_subscription(self):
+        '''
+            authorized user can subscribe on another user
+        '''
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + str(self.third_user_token))
+        response = self.client.post(reverse('userprofile_subscribe',
+            kwargs={"pk": self.second_userprofile.id}))
+
+        self.third_userprofile.refresh_from_db()
+        serializer = UserProfileSerializer(self.third_userprofile)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.json(), serializer.data)
+        self.assertEqual(response.json().get('followed_count'), 2)
+        self.assertEqual(response.json().get('followed_count'), serializer.data.get('followed_count'))
+
+    def test_unauthorized_subscription(self):
+        '''
+            unauthorized user can't subscribe on another user
+        '''
+        response = self.client.post(reverse('userprofile_subscribe',
+            kwargs={"pk": self.second_userprofile.id}))
+
+        self.third_userprofile.refresh_from_db()
+        serializer = UserProfileSerializer(self.third_userprofile)
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(serializer.data.get('followed_count'), 1)
+
+    def test_self_subscription(self):
+        '''
+            user can't subscribe on himself
+        '''
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + str(self.third_user_token))
+        response = self.client.post(reverse('userprofile_subscribe',
+            kwargs={"pk": self.third_userprofile.id}))
+
+        self.third_userprofile.refresh_from_db()
+        serializer = UserProfileSerializer(self.third_userprofile)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.json().get('message'), "You can not subscribe on yourself!")
+        self.assertEqual(serializer.data.get('followed_count'), 1)
