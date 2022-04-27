@@ -207,3 +207,38 @@ class UserProfileTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.json().get('message'), "You can not subscribe on yourself!")
         self.assertEqual(serializer.data.get('followed_count'), 1)
+
+    def test_authorized_unsubscribe(self):
+        '''
+            authorized user can unsubscribe from another user
+        '''
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + str(self.third_user_token))
+        response = self.client.post(reverse('userprofile_unsubscribe',
+            kwargs={"pk": self.first_userprofile.id}))
+
+        self.first_userprofile.refresh_from_db()
+        self.third_userprofile.refresh_from_db()
+
+        first_user_serializer = UserProfileSerializer(self.first_userprofile)
+        third_user_serializer = UserProfileSerializer(self.third_userprofile)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.json(), third_user_serializer.data)
+        self.assertEqual(first_user_serializer.data.get('followers_count'), 1)
+        self.assertEqual(third_user_serializer.data.get('followed_count'), 0)
+
+    def test_unauthorized_unsubscribe(self):
+        '''
+            unauthorized user can't unsubscribe from another user
+        '''
+        response = self.client.post(reverse('userprofile_unsubscribe',
+            kwargs={"pk": self.first_userprofile.id}))
+
+        self.first_userprofile.refresh_from_db()
+        self.third_userprofile.refresh_from_db()
+        first_user_serializer = UserProfileSerializer(self.first_userprofile)
+        third_user_serializer = UserProfileSerializer(self.third_userprofile)
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(first_user_serializer.data.get('followers_count'), 2)
+        self.assertEqual(third_user_serializer.data.get('followed_count'), 1)
