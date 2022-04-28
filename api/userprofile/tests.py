@@ -1,3 +1,4 @@
+from re import S
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from rest_framework import status
@@ -5,7 +6,7 @@ from rest_framework.test import APITestCase
 from rest_framework_simplejwt.tokens import AccessToken
 
 from userprofile.models import UserProfile
-from .serializers import UserProfileSerializer
+from .serializers import UserProfileSerializer, FollowerSerializer
 from api.exeptions import CustomApiException
 
 User = get_user_model()
@@ -46,6 +47,10 @@ class UserProfileTests(APITestCase):
 
         self.first_user_token = AccessToken.for_user(self.first_user)
         self.third_user_token = AccessToken.for_user(self.third_user)
+
+        self.first_userprofile.followers.add(self.second_userprofile)
+        self.second_userprofile.followers.add(self.first_userprofile)
+        self.third_userprofile.followers.add(self.first_userprofile)
 
     def test_valid_userprofile(self):
         '''
@@ -158,3 +163,146 @@ class UserProfileTests(APITestCase):
         with self.assertRaises(CustomApiException):
             self.client.post(reverse('user_registration'), {'username': 'my user',
                 'email': 'abcdf@mail.ru', 'password': 'qwe123'})
+
+    def test_authorized_subscription(self):
+        '''
+            authorized user can subscribe on another user
+        '''
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + str(self.third_user_token))
+        response = self.client.post(reverse('userprofile_subscribe',
+            kwargs={"pk": self.second_userprofile.id}))
+
+        self.third_userprofile.refresh_from_db()
+        serializer = UserProfileSerializer(self.third_userprofile)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.json(), serializer.data)
+        self.assertEqual(response.json().get('followed_count'), 2)
+        self.assertEqual(response.json().get('followed_count'), serializer.data.get('followed_count'))
+
+    def test_unauthorized_subscription(self):
+        '''
+            unauthorized user can't subscribe on another user
+        '''
+        response = self.client.post(reverse('userprofile_subscribe',
+            kwargs={"pk": self.second_userprofile.id}))
+
+        self.third_userprofile.refresh_from_db()
+        serializer = UserProfileSerializer(self.third_userprofile)
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(serializer.data.get('followed_count'), 1)
+
+    def test_self_subscription(self):
+        '''
+            user can't subscribe on himself
+        '''
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + str(self.third_user_token))
+        response = self.client.post(reverse('userprofile_subscribe',
+            kwargs={"pk": self.third_userprofile.id}))
+
+        self.third_userprofile.refresh_from_db()
+        serializer = UserProfileSerializer(self.third_userprofile)
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.json().get('message'), "You can not subscribe on yourself!")
+        self.assertEqual(serializer.data.get('followed_count'), 1)
+
+    def test_authorized_unsubscribe(self):
+        '''
+            authorized user can unsubscribe from another user
+        '''
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + str(self.third_user_token))
+        response = self.client.post(reverse('userprofile_unsubscribe',
+            kwargs={"pk": self.first_userprofile.id}))
+
+        self.first_userprofile.refresh_from_db()
+        self.third_userprofile.refresh_from_db()
+
+        first_user_serializer = UserProfileSerializer(self.first_userprofile)
+        third_user_serializer = UserProfileSerializer(self.third_userprofile)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.json(), third_user_serializer.data)
+        self.assertEqual(first_user_serializer.data.get('followers_count'), 1)
+        self.assertEqual(third_user_serializer.data.get('followed_count'), 0)
+
+    def test_unauthorized_unsubscribe(self):
+        '''
+            unauthorized user can't unsubscribe from another user
+        '''
+        response = self.client.post(reverse('userprofile_unsubscribe',
+            kwargs={"pk": self.first_userprofile.id}))
+
+        self.first_userprofile.refresh_from_db()
+        self.third_userprofile.refresh_from_db()
+        first_user_serializer = UserProfileSerializer(self.first_userprofile)
+        third_user_serializer = UserProfileSerializer(self.third_userprofile)
+
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(first_user_serializer.data.get('followers_count'), 2)
+        self.assertEqual(third_user_serializer.data.get('followed_count'), 1)
+
+    def test_authorized_userprofile_followers_list(self):
+        '''
+            authorized user can get list of followers of himself or another user
+        '''
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + str(self.first_user_token))
+        first_response = self.client.get(reverse('userprofile_followers',
+            kwargs={"pk": self.first_userprofile.id}))
+        second_response = self.client.get(reverse('userprofile_followers',
+            kwargs={"pk": self.second_userprofile.id}))
+
+        first_serializer = FollowerSerializer([self.second_userprofile, self.third_userprofile], many=True)
+        second_serializer = FollowerSerializer([self.first_userprofile], many=True)
+
+        self.assertEqual(first_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(second_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(first_response.json().get('count'), 2)
+        self.assertEqual(second_response.json().get('count'), 1)
+        self.assertEqual(first_response.json().get('results'), first_serializer.data)
+        self.assertEqual(second_response.json().get('results'), second_serializer.data)
+
+    def test_unauthorized_userprofile_followers_list(self):
+        '''
+            unauthorized user can't get list of followers of himself or another user
+        '''
+        first_response = self.client.get(reverse('userprofile_followers',
+            kwargs={"pk": self.first_userprofile.id}))
+        second_response = self.client.get(reverse('userprofile_followers',
+            kwargs={"pk": self.second_userprofile.id}))
+
+        self.assertEqual(first_response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(second_response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_authorized_userprofile_followed_list(self):
+        '''
+            authorized user can get list of followed users of himself or another user
+        '''
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + str(self.first_user_token))
+        first_resposne = self.client.get(reverse('userprofile_followed',
+            kwargs={"pk": self.first_userprofile.id}))
+        second_response = self.client.get(reverse('userprofile_followed',
+            kwargs={"pk": self.second_userprofile.id}))
+
+        first_serializer = FollowerSerializer([self.second_userprofile], many=True)
+        second_serializer = FollowerSerializer([self.first_userprofile], many=True)
+
+        self.assertEqual(first_resposne.status_code, status.HTTP_200_OK)
+        self.assertEqual(second_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(first_resposne.json().get('count'), 1)
+        self.assertEqual(second_response.json().get('count'), 1)
+        self.assertEqual(first_resposne.json().get('results'), first_serializer.data)
+        self.assertEqual(second_response.json().get('results'), second_serializer.data)
+
+    def test_unauthorized_userprofile_followed_list(self):
+        '''
+            unauthorized user can't get list of followed users of himself or another user
+        '''
+        first_response = self.client.get(reverse('userprofile_followed',
+            kwargs={"pk": self.first_userprofile.id}))
+        second_response = self.client.get(reverse('userprofile_followed',
+            kwargs={"pk": self.second_userprofile.id}))
+
+        self.assertEqual(first_response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(second_response.status_code, status.HTTP_401_UNAUTHORIZED)
