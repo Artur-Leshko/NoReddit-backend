@@ -263,13 +263,45 @@ class UserProfileTests(APITestCase):
         self.assertEqual(first_response.json().get('results'), first_serializer.data)
         self.assertEqual(second_response.json().get('results'), second_serializer.data)
 
-    def test_unauthorized_serprofile_followers_list(self):
+    def test_unauthorized_userprofile_followers_list(self):
         '''
             unauthorized user can't get list of followers of himself or another user
         '''
         first_response = self.client.get(reverse('userprofile_followers',
             kwargs={"pk": self.first_userprofile.id}))
         second_response = self.client.get(reverse('userprofile_followers',
+            kwargs={"pk": self.second_userprofile.id}))
+
+        self.assertEqual(first_response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(second_response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_authorized_userprofile_followed_list(self):
+        '''
+            authorized user can get list of followed users of himself or another user
+        '''
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + str(self.first_user_token))
+        first_resposne = self.client.get(reverse('userprofile_followed',
+            kwargs={"pk": self.first_userprofile.id}))
+        second_response = self.client.get(reverse('userprofile_followed',
+            kwargs={"pk": self.second_userprofile.id}))
+
+        first_serializer = FollowerSerializer([self.second_userprofile], many=True)
+        second_serializer = FollowerSerializer([self.first_userprofile], many=True)
+
+        self.assertEqual(first_resposne.status_code, status.HTTP_200_OK)
+        self.assertEqual(second_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(first_resposne.json().get('count'), 1)
+        self.assertEqual(second_response.json().get('count'), 1)
+        self.assertEqual(first_resposne.json().get('results'), first_serializer.data)
+        self.assertEqual(second_response.json().get('results'), second_serializer.data)
+
+    def test_unauthorized_userprofile_followed_list(self):
+        '''
+            unauthorized user can't get list of followed users of himself or another user
+        '''
+        first_response = self.client.get(reverse('userprofile_followed',
+            kwargs={"pk": self.first_userprofile.id}))
+        second_response = self.client.get(reverse('userprofile_followed',
             kwargs={"pk": self.second_userprofile.id}))
 
         self.assertEqual(first_response.status_code, status.HTTP_401_UNAUTHORIZED)
