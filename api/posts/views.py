@@ -22,6 +22,7 @@ QUERY_STRING_FOR_POPULAR_POSTS = '''
                 AND pp.created_at >= NOW() - INTERVAL '3 DAY'
     GROUP BY pp.id
     HAVING COUNT(pv.vote_type='up')>=3
+    ORDER BY pp.created_at DESC
 '''
 
 class PostPagination(PageNumberPagination):
@@ -48,9 +49,6 @@ class PopularPostsList(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticated]
     pagination_class = PostPagination
     queryset = Post.objects.all()
-    filter_backends = [filters.OrderingFilter]
-    ordering_fields = ['title', 'owner__user__username', 'created_at']
-    ordering = ['-created_at']
 
     def get_queryset(self):
         posts = Post.objects.raw(QUERY_STRING_FOR_POPULAR_POSTS)
