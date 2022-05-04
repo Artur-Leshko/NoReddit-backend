@@ -1,9 +1,10 @@
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
-from rest_framework import permissions, status
+from rest_framework import permissions, status, generics
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
+from rest_framework import filters
 
 from api.userprofile.serializers import UserProfileSerializer, FollowerSerializer
 from userprofile.models import UserProfile
@@ -33,6 +34,17 @@ class FollowerPagination(PageNumberPagination):
     page_size = 15
     page_size_query_param = 'page_size'
     max_page_size = 1000
+
+class UsersListView(generics.ListAPIView):
+    '''
+        returns list of users
+    '''
+    queryset = UserProfile.objects.all()
+    serializer_class = UserProfileSerializer
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['^firstname', '^surname', '^user__username']
+    ordering_fields = ['firstname', 'surname', 'user__username']
+    ordering = ['firstname']
 
 class UserProfileView(APIView):
     '''
