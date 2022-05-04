@@ -2,6 +2,7 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
+    path('', views.UsersListView.as_view(), name='userprofiles_search_order'),
     path('self/profile/', views.UserProfileView.as_view(), name='userprofile'),
     path('<str:pk>/profile/', views.UserProfilePublicView.as_view(), name="userprofile_public"),
     path('<str:pk>/subscribe/', views.UserProfileSubscribeView.as_view(), name="userprofile_subscribe"),
