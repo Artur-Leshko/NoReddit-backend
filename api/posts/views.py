@@ -1,4 +1,4 @@
-from rest_framework import permissions, status
+from rest_framework import permissions, status, filters
 from rest_framework import generics, serializers
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -48,11 +48,26 @@ class PopularPostsList(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticated]
     pagination_class = PostPagination
     queryset = Post.objects.all()
+    filter_backends = [filters.OrderingFilter]
+    ordering_fields = ['title', 'owner__user__username', 'created_at']
+    ordering = ['-created_at']
 
     def get_queryset(self):
         posts = Post.objects.raw(QUERY_STRING_FOR_POPULAR_POSTS)
 
         return posts
+
+class ListPosts(generics.ListAPIView):
+    '''
+        returns list of posts
+    '''
+    serializer_class = PostSerializer
+    queryset = Post.objects.all()
+    permission_classes = [permissions.IsAuthenticated]
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ['title', '^owner__user__username']
+    ordering_fields = ['title', 'owner__user__username', 'created_at']
+    ordering = ['-created_at']
 
 class CreatePost(generics.CreateAPIView):
     '''
@@ -70,6 +85,9 @@ class CreatePost(generics.CreateAPIView):
             return super().create(request, *args, **kwargs)
         except serializers.ValidationError:
             raise CustomApiException(400, "Bad request")
+
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
 
 class UpvotePostDetail(APIView):
     '''
