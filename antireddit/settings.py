@@ -91,7 +91,11 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'antireddit.urls'
 CORS_URLS_REGEX = r"^/api/.*"
-CORS_ALLOWED_ORIGINS = []
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost:3000',
+    'https://localhost:3000',
+]
+CORS_ALLOW_CREDENTIALS = True
 
 if DEBUG:
     CORS_ALLOWED_ORIGINS += [
