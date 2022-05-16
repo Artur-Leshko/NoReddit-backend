@@ -5,7 +5,6 @@ from django.db import IntegrityError, transaction
 from django.http import JsonResponse
 from django.contrib.auth import get_user_model
 from userprofile.models import UserProfile
-from api.exeptions import CustomApiException
 
 User = get_user_model()
 
@@ -27,9 +26,10 @@ def signup(request):
                 userprofile = UserProfile.objects.create(user=user, id=user.id)
                 userprofile.save()
         except IntegrityError:
-            raise CustomApiException(400, 'That username or email has already been taken! Please choose another one.')
+            return JsonResponse({'message': 'That username or email has already been taken! Please choose another one.'},
+                status=status.HTTP_400_BAD_REQUEST)
         except:
-            raise CustomApiException(400, 'Some of the data is missing: username, password or email')
+            return JsonResponse({'message': 'Some of the data is missing: username, password or email'},
+                status=status.HTTP_400_BAD_REQUEST)
         return JsonResponse({'message': 'You have successfully registered! Now sign-in!'},
                 status=status.HTTP_201_CREATED)
-
