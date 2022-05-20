@@ -143,6 +143,6 @@ class Followers(models.Model):
     '''
         Model for followers
     '''
-    id = models.AutoField(primary_key=True)
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     follower = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='follower_id')
     followed = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='followed_id')
