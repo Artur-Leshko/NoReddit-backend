@@ -142,7 +142,7 @@ class UserProfileSubscribeView(APIView):
         userprofile.followers.add(followed_userprofile)
         userprofile.save()
 
-        serializer = UserProfileSerializer(userprofile)
+        serializer = UserProfileSerializer(followed_userprofile)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 class UserProfileUnsubscribeView(APIView):
@@ -162,7 +162,7 @@ class UserProfileUnsubscribeView(APIView):
         userprofile.followers.remove(followed_userprofile)
         userprofile.save()
 
-        serilizer = UserProfileSerializer(userprofile)
+        serilizer = UserProfileSerializer(followed_userprofile)
 
         return Response(serilizer.data, status=status.HTTP_200_OK)
 

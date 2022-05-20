@@ -42,6 +42,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
         instance.firstname = validated_data.get('firstname', instance.firstname)
         instance.surname = validated_data.get('surname', instance.surname)
         instance.avatar = validated_data.get('avatar', instance.avatar)
+        instance.user.username = self.initial_data.get('username', instance.user.username)
         instance.save()
 
         user.username = user_data.get('username', user.username)
