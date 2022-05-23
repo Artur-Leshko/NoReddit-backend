@@ -19,9 +19,20 @@ QUERY_STRING_FOR_POPULAR_POSTS = '''
         FROM posts_post pp
             INNER JOIN posts_vote pv ON pp.id = pv.post_id
                 AND pv.vote_type = 'up'
-                AND pp.created_at >= NOW() - INTERVAL '3 DAY'
+                AND pp.created_at >= NOW() - INTERVAL '10 DAY'
     GROUP BY pp.id
-    HAVING COUNT(pv.vote_type='up')>=3
+    HAVING COUNT(pv.vote_type='up')>=2
+    ORDER BY pp.created_at DESC
+'''
+
+QUERY_STRING_FOR_VOTED_POSTS = '''
+    SELECT pp.id, pp.title, pp.main_text, pp.owner_id
+        FROM posts_post pp
+            INNER JOIN posts_vote pv ON pp.id = pv.post_id
+                AND pv.vote_type = %s
+			INNER JOIN userprofile_userprofile uu ON uu.id = pv.owner_id
+				AND uu.id = %s
+    GROUP BY pp.id
     ORDER BY pp.created_at DESC
 '''
 
@@ -63,7 +74,7 @@ class ListPosts(generics.ListAPIView):
     queryset = Post.objects.all()
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-    search_fields = ['title', '^owner__user__username']
+    search_fields = ['title', '^owner__user__username', 'owner__user__id']
     ordering_fields = ['title', 'owner__user__username', 'created_at']
     ordering = ['-created_at']
 
@@ -119,20 +130,20 @@ class UpvotePostDetail(APIView):
 
             serializer = PostSerializer(self.get_object(pk))
 
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response(serializer.data, status=status.HTTP_200_OK)
         elif current_vote_values[0]['vote_type'] == 'down':
             current_vote[0].vote_type = 'up'
             current_vote[0].save()
 
             serializer = PostSerializer(self.get_object(pk))
 
-            return Response(serializer.data, status=status.HTTP_205_RESET_CONTENT)
+            return Response(serializer.data, status=status.HTTP_200_OK)
         else:
             current_vote.delete()
 
             serializer = PostSerializer(self.get_object(pk))
 
-            return Response(serializer.data, status=status.HTTP_205_RESET_CONTENT)
+            return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class DownvotePostDetail(APIView):
@@ -161,6 +172,7 @@ class DownvotePostDetail(APIView):
         current_vote = Vote.objects.filter(owner=request.user.id, post=pk)
         current_vote_values = current_vote.values()
 
+        # try:
         if not current_vote:
             new_vote = Vote.objects.create(owner=UserProfile.objects.get(pk=request.user.id),
                 post=Post.objects.get(pk=pk), vote_type='down')
@@ -168,21 +180,49 @@ class DownvotePostDetail(APIView):
 
             serializer = PostSerializer(self.get_object(pk))
 
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response(serializer.data, status=status.HTTP_200_OK)
         elif current_vote_values[0]['vote_type'] == 'up':
             current_vote[0].vote_type = 'down'
             current_vote[0].save()
 
             serializer = PostSerializer(self.get_object(pk))
 
-            return Response(serializer.data, status=status.HTTP_205_RESET_CONTENT)
+            return Response(serializer.data, status=status.HTTP_200_OK)
         else:
             current_vote.delete()
 
             serializer = PostSerializer(self.get_object(pk))
 
-            return Response(serializer.data, status=status.HTTP_205_RESET_CONTENT)
+            return Response(serializer.data, status=status.HTTP_200_OK)
 
+class UpvotedUserPostListView(generics.ListAPIView):
+    '''
+        returns upvoted posts for current user
+    '''
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = PostSerializer
+    queryset = Post.objects.all()
+    pagination_class = PostPagination
+
+    def get_queryset(self):
+        posts = Post.objects.raw(QUERY_STRING_FOR_VOTED_POSTS, ['up', self.request.user.id])
+
+        return posts
+
+
+class DownvotedUserPostListView(generics.ListAPIView):
+    '''
+        returns downvoted posts for current user
+    '''
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = PostSerializer
+    queryset = Post.objects.all()
+    pagination_class = PostPagination
+
+    def get_queryset(self):
+        posts = Post.objects.raw(QUERY_STRING_FOR_VOTED_POSTS, ['down', self.request.user.id])
+
+        return posts
 
 class RetrievePostView(generics.RetrieveAPIView):
     '''
