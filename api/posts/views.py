@@ -267,4 +267,4 @@ class PostCommentsList(generics.ListAPIView):
     def get_queryset(self):
         comments = Comment.objects.filter(post=self.kwargs.get('pk'))
 
-        return comments.annotate(Count('commentvote')).order_by('-commentvote')
+        return comments.annotate(Count('commentvote')).order_by('-commentvote__count')
