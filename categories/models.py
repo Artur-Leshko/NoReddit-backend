@@ -20,7 +20,7 @@ class Category(models.Model):
     name = models.CharField(max_length=30, blank=False, unique=True)
     description = models.TextField(blank=False)
     category_image = models.ImageField(upload_to=category_path, blank=False, null=False)
-    posts = models.ManyToManyField(Post)
+    posts = models.ManyToManyField(Post, through="CategoryPosts")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -41,3 +41,12 @@ class Category(models.Model):
             returns count of posts that related with particular category
         '''
         return Post.objects.filter(category__id=self.id).count()
+
+
+class CategoryPosts(models.Model):
+    '''
+        m2m model for post categories
+    '''
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='category_id')
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='post_id')
