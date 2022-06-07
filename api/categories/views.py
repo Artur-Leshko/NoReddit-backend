@@ -81,8 +81,9 @@ class CategoryPostsListView(generics.ListAPIView):
         '''
             Returns posts of particular category
         '''
+        order = 'created_at' if request.query_params.get('ordering') == 'ASC' else '-created_at'
         category = Category.objects.get(name=pk)
-        posts = category.posts.all()
+        posts = category.posts.all().order_by(order)
         serializer = PostSerializer(self.paginate_queryset(posts), many=True)
 
         return self.get_paginated_response(serializer.data)

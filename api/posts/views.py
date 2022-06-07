@@ -22,7 +22,7 @@ QUERY_STRING_FOR_POPULAR_POSTS = '''
                 AND pp.created_at >= NOW() - INTERVAL '10 DAY'
     GROUP BY pp.id
     HAVING COUNT(pv.vote_type='up')>=2
-    ORDER BY pp.created_at DESC
+    ORDER BY pp.created_at {0}
 '''
 
 QUERY_STRING_FOR_VOTED_POSTS = '''
@@ -62,7 +62,8 @@ class PopularPostsList(generics.ListAPIView):
     queryset = Post.objects.all()
 
     def get_queryset(self):
-        posts = Post.objects.raw(QUERY_STRING_FOR_POPULAR_POSTS)
+        order = self.request.query_params.get('ordering')
+        posts = Post.objects.raw(QUERY_STRING_FOR_POPULAR_POSTS.format(order or 'DESC'))
 
         return posts
 
