@@ -34,11 +34,20 @@ class FollowerPagination(PageNumberPagination):
     page_size_query_param = 'page_size'
     max_page_size = 1000
 
+class UsersPagination(PageNumberPagination):
+    '''
+        Pagination class for users
+    '''
+    page_size = 20
+    page_size_query_param = 'page_size'
+    max_page_size = 1000
+
 class UsersListView(generics.ListAPIView):
     '''
         returns list of users
     '''
     queryset = UserProfile.objects.all()
+    pagination_class = UsersPagination
     serializer_class = UserProfileSerializer
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['^firstname', '^surname', '^user__username']
